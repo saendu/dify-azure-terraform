@@ -596,15 +596,15 @@ resource "azurerm_container_app" "api" {
         value = "1000"
       }
 
-      env {
-        name  = "SSRF_PROXY_HTTP_URL"
-        value = "http://ssrfproxy:3128"
-      }
+      # env {
+      #   name  = "SSRF_PROXY_HTTP_URL"
+      #   value = "http://ssrfproxy:3128"
+      # }
 
-      env {
-        name  = "SSRF_PROXY_HTTPS_URL"
-        value = "http://ssrfproxy:3128"
-      }
+      # env {
+      #   name  = "SSRF_PROXY_HTTPS_URL"
+      #   value = "http://ssrfproxy:3128"
+      # }
 
       env {
         name  = "INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH"
