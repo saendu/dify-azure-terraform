@@ -53,7 +53,7 @@ resource "azurerm_container_app" "nginx" {
       concurrent_requests = "10"
     }
     max_replicas = 10
-    min_replicas = 0
+    min_replicas = 1
     container {
       name   = "nginx"
       image  = "nginx:latest"
@@ -81,10 +81,10 @@ resource "azurerm_container_app" "nginx" {
     }
     transport = "auto"
     
-    custom_domain {
+    /* custom_domain {
       name = var.aca-dify-customer-domain
       certificate_id = azurerm_container_app_environment_certificate.difycerts.id
-    }
+    } */
   }
 }
 
@@ -110,7 +110,7 @@ resource "azurerm_container_app" "ssrfproxy" {
       concurrent_requests = "10"
     }
     max_replicas = 10
-    min_replicas = 0
+    min_replicas = 1
     container {
       name   = "ssrfproxy"
       image  = "ubuntu/squid:latest"
@@ -163,7 +163,7 @@ resource "azurerm_container_app" "sandbox" {
       concurrent_requests = "10"
     }
     max_replicas = 10
-    min_replicas = 0
+    min_replicas = 1
     container {
       name   = "langgenius"
       image  = var.dify-sandbox-image
@@ -372,7 +372,7 @@ resource "azurerm_container_app" "api" {
       concurrent_requests = "10"
     }
     max_replicas = 10
-    min_replicas = 0
+    min_replicas = 1
     container {
       name   = "langgenius"
       image  = var.dify-api-image
@@ -639,7 +639,7 @@ resource "azurerm_container_app" "web" {
       concurrent_requests = "10"
     }
     max_replicas = 10
-    min_replicas = 0
+    min_replicas = 1
     container {
       name   = "langgenius"
       image  = "langgenius/dify-web:0.6.11"

@@ -1,12 +1,17 @@
 variable "subscription-id" {
   type = string
-  default = "0000000000000"
+  default = "76958d76-d94f-402b-a86b-fc6a720a2ba8"
+}
+
+variable "group-name" {
+  type = string
+  default = "dify-ina"
 }
 
 #virtual network variables
 variable "region" {
   type = string
-  default = "japaneast"
+  default = "switzerlandnorth"
 }
 
 variable "ip-prefix" {
@@ -17,7 +22,7 @@ variable "ip-prefix" {
 
 variable "storage-account" {
   type = string
-  default = "acadifytest"
+  default = "inadifystorage"
 }
 
 variable "storage-account-container" {
@@ -27,12 +32,12 @@ variable "storage-account-container" {
 
 variable "redis" {
   type = string
-  default = "acadifyredis"
+  default = "inadifyredis"
 }
 
 variable "psql-flexible" {
   type = string
-  default = "acadifypsql"
+  default = "inadifypsql"
 }
 
 variable "pgsql-user" {
@@ -42,12 +47,12 @@ variable "pgsql-user" {
 
 variable "pgsql-password" {
   type = string
-  default = "#QWEASDasdqwe"
+  default = "Test0001"
 }
 
 variable "aca-env" {
   type = string
-  default = "dify-aca-env"
+  default = "dify-ina-env"
 }
 
 variable "aca-loga" {
@@ -62,20 +67,20 @@ variable "aca-cert-path" {
 
 variable "aca-cert-password" {
   type = string
-  default = "password"
+  default = "Test0001"
 }
 
 variable "aca-dify-customer-domain" {
   type = string
-  default = "dify.nikadwang.com"
+  default = "agents.innoarchitects.ch"
 }
 
 variable "dify-api-image" {
   type = string
-  default = "langgenius/dify-api:0.6.11"
+  default = "langgenius/dify-api:0.6.13"
 }
 
 variable "dify-sandbox-image" {
   type = string
-  default = "langgenius/dify-sandbox:0.2.1"
+  default = "langgenius/dify-sandbox:0.2.4"
 }

@@ -1,4 +1,24 @@
-## dify-azure-terraform
+# Notes Sändu
+## ChatSource
+https://chatgpt.com/g/g-VIsiBgv06-azure-expert/c/0289d230-55bf-4131-88b3-46dc21419275
+
+## Create Self-Signed Certificate in Azure Key Vault
+az keyvault certificate create --vault-name <your-key-vault-name> --name <certificate-name> --policy "$(az keyvault certificate get-default-policy)"
+
+## Download the Certificate as PFX File
+az keyvault secret download --vault-name <your-key-vault-name> --name <certificate-name> --file <output-file.pfx> --encoding base64
+
+## Extract the Private Key and Certificate
+openssl pkcs12 -in output-file.pfx -nocerts -out private-key.pem -nodes
+openssl pkcs12 -in output-file.pfx -nokeys -out certificate.pem
+
+## Combine the Private Key and Certificate into a Single PEM File
+cat private-key.pem certificate.pem > combined.pem
+
+## Export the Combined PEM to a New PFX File with a Password
+openssl pkcs12 -export -in combined.pem -out new-output-file.pfx -password pass:Test0001
+
+# dify-azure-terraform
 Deploy [langgenius/dify](https://github.com/langgenius/dify), an LLM based chat bot app on Azure with terraform.
 
 ### Topology
