@@ -1,4 +1,9 @@
 # Notes Sändu
+
+## Todos
+[] Change variables in var.tf
+[] Change all passwords
+
 ## ChatSource
 https://chatgpt.com/g/g-VIsiBgv06-azure-expert/c/0289d230-55bf-4131-88b3-46dc21419275
 
@@ -135,7 +140,7 @@ This document provides detailed descriptions of the variables used in the Terraf
 
 - **Variable Name**: `dify-api-image`
 - **Type**: `string`
-- **Default Value**: `langgenius/dify-api:0.6.11`
+- **Default Value**: `langgenius/dify-api:0.6.16`
 
 ##### Dify Sandbox Image
 
@@ -147,4 +152,4 @@ This document provides detailed descriptions of the variables used in the Terraf
 
 - **Variable Name**: `dify-web-image`
 - **Type**: `string`
-- **Default Value**: `langgenius/dify-web:0.6.11`
+- **Default Value**: `langgenius/dify-web:0.6.16`

@@ -642,7 +642,7 @@ resource "azurerm_container_app" "web" {
     min_replicas = 1
     container {
       name   = "langgenius"
-      image  = "langgenius/dify-web:0.6.11"
+      image  = "langgenius/dify-web:0.6.16"
       cpu    = 1
       memory = "2Gi"
        env {
