@@ -573,12 +573,12 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "CODE_MAX_STRING_LENGTH"
-        value = "80000"
+        value = "400000"
       }
 
       env {
         name  = "TEMPLATE_TRANSFORM_MAX_LENGTH"
-        value = "80000"
+        value = "400000"
       }
 
       env {
