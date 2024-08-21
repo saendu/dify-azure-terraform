@@ -4,6 +4,14 @@
 [] Change variables in var.tf
 [] Change all passwords
 
+## Terraform
+az login
+az account set --subscription 76958d76-d94f-402b-a86b-fc6a720a2ba8
+
+terraform init
+terraform plan
+terraform apply
+
 ## ChatSource
 https://chatgpt.com/g/g-VIsiBgv06-azure-expert/c/0289d230-55bf-4131-88b3-46dc21419275
 
