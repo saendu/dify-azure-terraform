@@ -34,13 +34,6 @@ resource "azurerm_container_app_environment_storage" "nginxfileshare" {
   access_mode                  = "ReadWrite"
 }
 
-resource "azurerm_container_app_environment_certificate" "difycerts" {
-  name                         = "difycerts"
-  container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
-  certificate_blob_base64 = filebase64(var.aca-cert-path)
-  certificate_password = var.aca-cert-password
-}
-
 resource "azurerm_container_app" "nginx" {
   name                         = "nginx"
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
