@@ -60,16 +60,6 @@ variable "aca-loga" {
   default = "dify-loga"
 }
 
-variable "aca-cert-path" {
-  type = string
-  default = "./certs/difycert.pfx"
-}
-
-variable "aca-cert-password" {
-  type = string
-  default = "Test0001"
-}
-
 variable "aca-dify-customer-domain" {
   type = string
   default = "agents.innoarchitects.ch"
@@ -77,10 +67,16 @@ variable "aca-dify-customer-domain" {
 
 variable "dify-api-image" {
   type = string
-  default = "langgenius/dify-api:0.6.16"
+  default = "langgenius/dify-api:0.10.0-beta3"
 }
 
 variable "dify-sandbox-image" {
   type = string
-  default = "langgenius/dify-sandbox:0.2.4"
+  default = "langgenius/dify-sandbox:0.2.5"
 }
+
+variable "dify-web-image" {
+  type = string
+  default = "langgenius/dify-web:0.10.0-beta3"
+}
+
