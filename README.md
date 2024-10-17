@@ -8,6 +8,11 @@
 az login
 az account set --subscription 76958d76-d94f-402b-a86b-fc6a720a2ba8
 
+### requirements
+az provider register --namespace Microsoft.App
+az provider show --namespace Microsoft.App
+
+### run script
 terraform init
 terraform plan
 terraform apply
