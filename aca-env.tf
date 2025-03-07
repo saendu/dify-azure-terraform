@@ -45,8 +45,8 @@ resource "azurerm_container_app" "nginx" {
       name = "nginx"
       concurrent_requests = "10"
     }
-    max_replicas = 10
-    min_replicas = 1
+    max_replicas = 1
+    min_replicas = 0
     container {
       name   = "nginx"
       image  = "nginx:latest"
@@ -102,8 +102,8 @@ resource "azurerm_container_app" "ssrfproxy" {
       name = "ssrfproxy"
       concurrent_requests = "10"
     }
-    max_replicas = 10
-    min_replicas = 1
+    max_replicas = 1
+    min_replicas = 0
     container {
       name   = "ssrfproxy"
       image  = "ubuntu/squid:latest"
@@ -155,8 +155,8 @@ resource "azurerm_container_app" "sandbox" {
       name = "sandbox"
       concurrent_requests = "10"
     }
-    max_replicas = 10
-    min_replicas = 1
+    max_replicas = 1
+    min_replicas = 0
     container {
       name   = "langgenius"
       image  = var.dify-sandbox-image
@@ -228,8 +228,8 @@ resource "azurerm_container_app" "worker" {
       name = "worker"
       concurrent_requests = "10"
     }
-    max_replicas = 10
-    min_replicas = 1
+    max_replicas = 1
+    min_replicas = 0
     container {
       name   = "langgenius"
       image  = var.dify-api-image
@@ -364,8 +364,8 @@ resource "azurerm_container_app" "api" {
       name = "api"
       concurrent_requests = "10"
     }
-    max_replicas = 10
-    min_replicas = 1
+    max_replicas = 1
+    min_replicas = 0
     container {
       name   = "langgenius"
       image  = var.dify-api-image
@@ -631,8 +631,8 @@ resource "azurerm_container_app" "web" {
       name = "web"
       concurrent_requests = "10"
     }
-    max_replicas = 10
-    min_replicas = 1
+    max_replicas = 1
+    min_replicas = 0
     container {
       name   = "langgenius"
       image  = var.dify-web-image
