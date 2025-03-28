@@ -1,4 +1,3 @@
-
 resource "azurerm_storage_account" "acafileshare" {
   name                     = var.storage-account
   resource_group_name      = azurerm_resource_group.rg.name
@@ -33,6 +32,13 @@ module "ssrf_proxy_fileshare" {
   storage_account_name = azurerm_storage_account.acafileshare.name
   local_mount_dir      = "mountfiles/ssrfproxy"
   share_name           = "ssrfproxy"
+}
+
+module "plugin_daemon_fileshare" {
+  source              = "./fileshare_module"
+  storage_account_name = azurerm_storage_account.acafileshare.name
+  local_mount_dir      = "mountfiles/plugin_daemon"
+  share_name           = "plugin-daemon"
 }
 
 

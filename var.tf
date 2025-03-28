@@ -5,7 +5,7 @@ variable "subscription-id" {
 
 variable "group-name" {
   type = string
-  default = "dify-ina"
+  default = "dify-ina-latest"
 }
 
 #virtual network variables
@@ -22,7 +22,7 @@ variable "ip-prefix" {
 
 variable "storage-account" {
   type = string
-  default = "inadifystorage"
+  default = "inalatestdifystorage"
 }
 
 variable "storage-account-container" {
@@ -32,12 +32,12 @@ variable "storage-account-container" {
 
 variable "redis" {
   type = string
-  default = "inadifyredis"
+  default = "inalatestdifyredis"
 }
 
 variable "psql-flexible" {
   type = string
-  default = "inadifypsql"
+  default = "inalatestdifypsql"
 }
 
 variable "pgsql-user" {
@@ -52,7 +52,7 @@ variable "pgsql-password" {
 
 variable "aca-env" {
   type = string
-  default = "dify-ina-env"
+  default = "dify-ina-latest-env"
 }
 
 variable "aca-loga" {
@@ -67,16 +67,21 @@ variable "aca-dify-customer-domain" {
 
 variable "dify-api-image" {
   type = string
-  default = "langgenius/dify-api:0.10.0-beta3"
+  default = "langgenius/dify-api:1.1.3"
 }
 
 variable "dify-sandbox-image" {
   type = string
-  default = "langgenius/dify-sandbox:0.2.5"
+  default = "langgenius/dify-sandbox:0.2.11"
 }
 
 variable "dify-web-image" {
   type = string
-  default = "langgenius/dify-web:0.10.0-beta3"
+  default = "langgenius/dify-web:1.1.3"
+}
+
+variable "dify-plugin-daemon-image" {
+  type = string
+  default = "langgenius/dify-plugin-daemon:0.0.6-serverless"
 }
 

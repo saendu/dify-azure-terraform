@@ -1,0 +1,11 @@
+{
+  "RedisHost": "inalatestdifyredis.redis.cache.windows.net",
+  "RedisPort": 6379,
+  "RedisPassword": "84vBzM532WJ7)<B",
+  "RedisDB": 0,
+  "RedisUseSSL": true,
+  "ServerPort": 5002,
+  "ServerKey": "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi",
+  "DifyInnerApiUrl": "http://api:5001",
+  "DifyInnerApiKey": "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+} 

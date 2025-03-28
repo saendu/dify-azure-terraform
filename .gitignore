@@ -2,3 +2,4 @@
 terraform.*
 .terraform/**
 .DS_Store
+dify-docker/**

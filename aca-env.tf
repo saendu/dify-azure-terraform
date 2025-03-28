@@ -133,6 +133,265 @@ resource "azurerm_container_app" "ssrfproxy" {
   }
 }
 
+resource "azurerm_container_app_environment_storage" "plugindaemonfileshare" {
+  name                         = "plugindaemonfileshare"
+  container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
+  account_name                 = azurerm_storage_account.acafileshare.name
+  # share_name = 
+  share_name                   = module.plugin_daemon_fileshare.share_name
+  access_key                   = azurerm_storage_account.acafileshare.primary_access_key
+  access_mode                  = "ReadWrite"
+}
+
+resource "azurerm_container_app" "plugin_daemon" {
+  name                         = "plugin-daemon"
+  container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
+
+  template {
+    tcp_scale_rule {
+      name = "plugin-daemon"
+      concurrent_requests = "10"
+    }
+    max_replicas = 1
+    min_replicas = 0
+    container {
+      name   = "plugin-daemon"
+      image  = var.dify-plugin-daemon-image
+      cpu    = 0.5
+      memory = "1Gi"
+      
+      command = [
+        "/bin/sh", 
+        "-c", 
+        "echo '{\"RedisHost\":\"inalatestdifyredis.redis.cache.windows.net\",\"RedisPort\":6379,\"RedisPassword\":\"'$REDIS_PASSWORD'\",\"RedisDB\":0,\"RedisUseSSL\":true,\"ConnectorURL\":\"http://api:5001\"}' > /tmp/config.json && cat /tmp/config.json && ./main -config=/tmp/config.json"
+      ]
+      
+      # Environment variables that match the shared env in docker-compose
+      env {
+        name  = "REDIS_HOST"
+        value = azurerm_redis_cache.redis.hostname
+      }
+      env {
+        name  = "REDIS_PORT"
+        value = "6379"
+      }
+      # Additional formats that Go might expect
+      env {
+        name  = "CONFIG_REDIS_HOST"
+        value = azurerm_redis_cache.redis.hostname
+      }
+      env {
+        name  = "CONFIG_REDIS_PORT"
+        value = "6379"
+      }
+      # Try more formats
+      env {
+        name  = "REDIS_ADDR"
+        value = "${azurerm_redis_cache.redis.hostname}:6379"
+      }
+      env {
+        name  = "RedisHost"
+        value = azurerm_redis_cache.redis.hostname
+      }
+      env {
+        name  = "RedisPort"
+        value = "6379"
+      }
+      env {
+        name  = "RedisPassword"
+        value = azurerm_redis_cache.redis.primary_access_key
+      }
+      env {
+        name  = "RedisDB"
+        value = "0"
+      }
+      env {
+        name  = "RedisUseSSL"
+        value = "true"
+      }
+      env {
+        name  = "REDIS_USERNAME"
+        value = ""
+      }
+      env {
+        name  = "REDIS_PASSWORD"
+        value = azurerm_redis_cache.redis.primary_access_key
+      }
+      env {
+        name  = "REDIS_USE_SSL"
+        value = "true"
+      }
+      env {
+        name  = "REDIS_DB"
+        value = "0"
+      }
+      env {
+        name  = "REDIS_USE_SENTINEL"
+        value = "false"
+      }
+      env {
+        name  = "REDIS_SENTINELS"
+        value = ""
+      }
+      env {
+        name  = "REDIS_SENTINEL_SERVICE_NAME"
+        value = ""
+      }
+      env {
+        name  = "REDIS_SENTINEL_USERNAME"
+        value = ""
+      }
+      env {
+        name  = "REDIS_SENTINEL_PASSWORD"
+        value = ""
+      }
+      env {
+        name  = "REDIS_SENTINEL_SOCKET_TIMEOUT"
+        value = "0.1"
+      }
+      env {
+        name  = "REDIS_USE_CLUSTERS"
+        value = "false"
+      }
+      env {
+        name  = "REDIS_CLUSTERS"
+        value = ""
+      }
+      env {
+        name  = "REDIS_CLUSTERS_PASSWORD"
+        value = ""
+      }
+      env {
+        name  = "CELERY_BROKER_URL"
+        value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+      }
+      env {
+        name  = "BROKER_USE_SSL"
+        value = "true"
+      }
+      env {
+        name  = "CELERY_USE_SENTINEL"
+        value = "false"
+      }
+      env {
+        name  = "CELERY_SENTINEL_MASTER_NAME"
+        value = ""
+      }
+      env {
+        name  = "CELERY_SENTINEL_SOCKET_TIMEOUT"
+        value = "0.1"
+      }
+      
+      # Plugin-specific environment variables
+      env {
+        name  = "DB_USERNAME"
+        value = azurerm_postgresql_flexible_server.postgres.administrator_login
+      }
+      env {
+        name  = "DB_PASSWORD"
+        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+      }
+      env {
+        name  = "DB_HOST"
+        value = azurerm_postgresql_flexible_server.postgres.fqdn
+      }
+      env {
+        name  = "DB_PORT"
+        value = "5432"
+      }
+      env {
+        name  = "DB_DATABASE"
+        value = azurerm_postgresql_flexible_server_database.dify_plugin.name
+      }
+      env {
+        name  = "SERVER_PORT"
+        value = "5002"
+      }
+      env {
+        name  = "SERVER_KEY"
+        value = "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
+      }
+      env {
+        name  = "DIFY_INNER_API_URL"
+        value = "http://api:5001"
+      }
+      env {
+        name  = "DIFY_INNER_API_KEY"
+        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+      }
+      env {
+        name  = "PLUGIN_REMOTE_INSTALLING_HOST"
+        value = "0.0.0.0"
+      }
+      env {
+        name  = "PLUGIN_REMOTE_INSTALLING_PORT"
+        value = "5003"
+      }
+      env {
+        name  = "PLUGIN_WORKING_PATH"
+        value = "/app/storage/cwd"
+      }
+      env {
+        name  = "FORCE_VERIFYING_SIGNATURE"
+        value = "true"
+      }
+      env {
+        name  = "PLUGIN_MAX_PACKAGE_SIZE"
+        value = "52428800"
+      }
+      env {
+        name  = "MAX_PLUGIN_PACKAGE_SIZE"
+        value = "52428800"
+      }
+      env {
+        name  = "PYTHON_ENV_INIT_TIMEOUT"
+        value = "120"
+      }
+      env {
+        name  = "PLUGIN_MAX_EXECUTION_TIMEOUT"
+        value = "600"
+      }
+      env {
+        name  = "ENDPOINT_URL_TEMPLATE"
+        value = "http://nginx/e/{hook_id}"
+      }
+      
+      # Connector URL for serverless mode
+      env {
+        name  = "CONNECTOR_URL"
+        value = "http://api:5001"
+      }
+      env {
+        name  = "ConnectorURL"
+        value = "http://api:5001"
+      }
+      
+      volume_mounts {
+        name = "plugin-daemon"
+        path = "/app/storage"
+      }
+    }
+    
+    volume {
+      name = "plugin-daemon"
+      storage_type = "AzureFile"
+      storage_name = azurerm_container_app_environment_storage.plugindaemonfileshare.name
+    }
+  }
+  
+  ingress {
+    target_port = 5002
+    exposed_port = 5002
+    external_enabled = false
+    traffic_weight {
+      percentage = 100
+      latest_revision = true
+    }
+    transport = "tcp"
+  }
+}
 
 resource "azurerm_container_app_environment_storage" "sandboxfileshare" {
   name                         = "sandbox"
@@ -349,6 +608,20 @@ resource "azurerm_container_app" "worker" {
         name  = "INDEXING_MAX_SEGMENTATION_TOKENS_LENGTH"
         value = "1000"
       }
+      
+      env {
+        name  = "PLUGIN_MAX_PACKAGE_SIZE"
+        value = "52428800"
+      }
+      env {
+        name  = "INNER_API_KEY_FOR_PLUGIN"
+        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+      }
+      
+      env {
+        name  = "PLUGIN_DAEMON_URL"
+        value = "http://plugin-daemon:5002"
+      }
     }
   }
 }
@@ -436,6 +709,30 @@ resource "azurerm_container_app" "api" {
         value = "1.0"
       }
 
+      env {
+        name  = "PLUGIN_REMOTE_INSTALL_HOST"
+        value = "plugin-daemon"
+      }
+      
+      env {
+        name  = "PLUGIN_REMOTE_INSTALL_PORT"
+        value = "5003"
+      }
+      
+      env {
+        name  = "PLUGIN_MAX_PACKAGE_SIZE"
+        value = "52428800"
+      }
+      
+      env {
+        name  = "INNER_API_KEY_FOR_PLUGIN"
+        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+      }
+      
+      env {
+        name  = "PLUGIN_DAEMON_URL"
+        value = "http://plugin-daemon:5002"
+      }
 
       env {
         name  = "DB_USERNAME"
@@ -604,6 +901,11 @@ resource "azurerm_container_app" "api" {
         value = "1000"
       }
 
+      env {
+        name  = "PLUGIN_DAEMON_URL"
+        value = "http://plugin-daemon:5002"
+      }
+
     }
   }
 
@@ -638,19 +940,57 @@ resource "azurerm_container_app" "web" {
       image  = var.dify-web-image
       cpu    = 1
       memory = "2Gi"
-       env {
+      env {
         name  = "CONSOLE_API_URL"
         value = ""
       }
-
       env {
         name  = "APP_API_URL"
         value = ""
       }
-
       env {
         name  = "SENTRY_DSN"
         value = ""
+      }
+      env {
+        name  = "NEXT_TELEMETRY_DISABLED"
+        value = "0"
+      }
+      env {
+        name  = "TEXT_GENERATION_TIMEOUT_MS"
+        value = "60000"
+      }
+      env {
+        name  = "CSP_WHITELIST"
+        value = ""
+      }
+      env {
+        name  = "MARKETPLACE_API_URL"
+        value = "https://marketplace.dify.ai"
+      }
+      env {
+        name  = "MARKETPLACE_URL"
+        value = "https://marketplace.dify.ai"
+      }
+      env {
+        name  = "PM2_INSTANCES"
+        value = "2"
+      }
+      env {
+        name  = "LOOP_NODE_MAX_COUNT"
+        value = "100"
+      }
+      env {
+        name  = "MAX_TOOLS_NUM"
+        value = "10"
+      }
+      env {
+        name  = "MAX_PARALLEL_LIMIT"
+        value = "10"
+      }
+      env {
+        name  = "MAX_ITERATIONS_NUM"
+        value = "5"
       }
     }
   }
