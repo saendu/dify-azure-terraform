@@ -3,7 +3,10 @@
 ## Todos
 [] Change variables in var.tf
 [] Change all passwords
-[] Delete .terraform.lock.hcl AND terraform.tfstate
+[] Delete folders 
+    - .terraform
+    - .terraform.lock.hcl 
+    - terraform.tfstate
 
 ## Terraform
 az login

@@ -25,8 +25,7 @@ locals {
 resource "azurerm_storage_share_directory" "directories" {
   for_each              = toset(local.directories)
   name                  = each.value
-  storage_account_name  = var.storage_account_name
-  share_name            = azurerm_storage_share.fileshare.name
+  storage_share_id      = azurerm_storage_share.fileshare.id
 }
 
 resource "azurerm_storage_share_file" "root_files" {
