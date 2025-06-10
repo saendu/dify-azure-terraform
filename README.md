@@ -7,9 +7,11 @@
     - .terraform
     - .terraform.lock.hcl 
     - terraform.tfstate
+    - terraform.tfstate.backup
 
 ## Terraform
 az login
+az login --use-device-code --tenant <name>.onmicrosoft.com  
 az account set --subscription 76958d76-d94f-402b-a86b-fc6a720a2ba8
 
 ### requirements
@@ -20,6 +22,9 @@ az provider show --namespace Microsoft.App
 terraform init
 terraform plan
 terraform apply
+
+#### Existing resource group
+terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resourceGroups/<groupName>
 
 ## ChatSource
 https://chatgpt.com/g/g-VIsiBgv06-azure-expert/c/0289d230-55bf-4131-88b3-46dc21419275
