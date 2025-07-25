@@ -586,7 +586,7 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "CODE_MAX_NUMBER_ARRAY_LENGTH"
-        value = "1000"
+        value = "3000"
       }
 
       # env {
