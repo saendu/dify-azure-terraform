@@ -652,6 +652,10 @@ resource "azurerm_container_app" "web" {
         name  = "SENTRY_DSN"
         value = ""
       }
+      env {
+        name  = "TEXT_GENERATION_TIMEOUT_MS"
+        value = "600000" // 10 minutes 
+      }
     }
   }
 
