@@ -245,7 +245,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "SECRET_KEY"
-        value = "sk-9f73s3ljTXVcMT3Blb3ljTqtsKiGHXVcMT3BlbkFJLK7U"
+        value = "demokey"
       }
       env {
         name  = "DB_USERNAME"
@@ -381,7 +381,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "SECRET_KEY"
-        value = "sk-9f73s3ljTXVcMT3Blb3ljTqtsKiGHXVcMT3BlbkFJLK7U"
+        value = "demokey"
       }
 
       env {
