@@ -82,6 +82,6 @@ variable "dify-web-image" {
 
 variable "dify-plugin-daemon-image" {
   type = string
-  default = "langgenius/dify-plugin-daemon:0.1.1-local"
+  default = "langgenius/dify-plugin-daemon:0.5.2-local"
 }
 
