@@ -38,7 +38,13 @@ module "plugin_daemon_fileshare" {
   source              = "./fileshare_module"
   storage_account_name = azurerm_storage_account.acafileshare.name
   local_mount_dir      = "mountfiles/plugin_daemon"
-  share_name           = "plugin-daemon"
+  share_name           = "plugindaemon"
 }
 
+# API storage share for persistent data
+resource "azurerm_storage_share" "api_storage" {
+  name                 = "api-storage"
+  storage_account_name = azurerm_storage_account.acafileshare.name
+  quota                = 50
+}
 
