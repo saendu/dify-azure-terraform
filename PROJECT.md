@@ -86,12 +86,13 @@ This project contains the Terraform configuration for deploying a Dify environme
 
 #### 4. Plugin Daemon (New in Dify 1.x)
 - **Role**: Plugin execution and management
-- **Image**: langgenius/dify-plugin-daemon:0.1.1-local
+- **Image**: langgenius/dify-plugin-daemon:0.5.2-local
 - **Scaling**: 1-10 replicas
 - **Critical Settings**:
   - `DB_SSL_MODE=require` (Required for Azure PostgreSQL)
   - UV package manager with copy mode (no symlinks)
   - Plugin working paths in `/tmp` for Azure compatibility
+  - Correct env var names (see configuration section below)
 
 #### 5. Worker
 - **Role**: Background job processing (Celery)
@@ -116,36 +117,72 @@ This project contains the Terraform configuration for deploying a Dify environme
 - API: langgenius/dify-api:1.11.3
 - Web: langgenius/dify-web:1.11.3
 - Sandbox: langgenius/dify-sandbox:0.2.12
-- Plugin Daemon: langgenius/dify-plugin-daemon:0.1.1-local
+- Plugin Daemon: langgenius/dify-plugin-daemon:0.5.2-local
 
 ## Key Configuration Notes for Dify 1.x on Azure
 
 ### Plugin Daemon Configuration
-The plugin daemon requires special configuration for Azure Container Apps:
+The plugin daemon requires special configuration for Azure Container Apps.
 
-1. **SSL Mode**: Azure PostgreSQL requires SSL connections
-   ```
-   DB_SSL_MODE=require
-   ```
+⚠️ **IMPORTANT**: The plugin daemon uses different environment variable names than the Dify API!
+Check the [official config.go](https://github.com/langgenius/dify-plugin-daemon/blob/main/internal/types/app/config.go) for authoritative env var names.
 
-2. **UV Package Manager**: Azure File Shares don't support symlinks
-   ```
-   UV_COPY=1
-   UV_LINK_MODE=copy
-   UV_NO_SYMLINKS=1
-   ```
+**Required Server Configuration:**
+```
+SERVER_HOST=0.0.0.0
+SERVER_PORT=5002
+SERVER_KEY=<your-plugin-daemon-key>   # NOT PLUGIN_DAEMON_KEY!
+GIN_MODE=release
+PLATFORM=local
+ROUTINE_POOL_SIZE=1024
+PLUGIN_LOCAL_LAUNCHING_CONCURRENT=4
+```
 
-3. **Plugin Paths**: Use `/tmp` for working directories
-   ```
-   PLUGIN_WORKING_PATH=/tmp/plugin_workdir
-   PLUGIN_INSTALLED_PATH=/tmp/plugin_installed
-   ```
+**Dify API Communication:**
+```
+DIFY_INNER_API_URL=http://api:5001   # NOT PLUGIN_DIFY_INNER_API_URL!
+DIFY_INNER_API_KEY=<your-inner-api-key>   # NOT PLUGIN_DIFY_INNER_API_KEY!
+```
 
-4. **Python Configuration**:
-   ```
-   PYTHON_INTERPRETER_PATH=/usr/bin/python3.12
-   PYTHONPATH=/tmp/plugin_workdir
-   ```
+**Database Configuration:**
+```
+DB_SSL_MODE=require   # Required for Azure PostgreSQL
+DB_USERNAME=<db-user>
+DB_PASSWORD=<db-pass>
+DB_HOST=<db-host>
+DB_PORT=5432
+DB_DATABASE=dify_plugin
+DB_DEFAULT_DATABASE=postgres   # Required!
+```
+
+**Azure-Specific Settings (UV Package Manager):**
+```
+UV_COPY=1
+UV_LINK_MODE=copy
+UV_NO_SYMLINKS=1
+```
+Azure File Shares don't support symlinks, so UV must use copy mode.
+
+**Plugin Paths:**
+```
+PLUGIN_WORKING_PATH=/tmp/plugin_workdir
+PLUGIN_INSTALLED_PATH=/tmp/plugin_installed
+```
+Use `/tmp` for working directories due to Azure File Share limitations.
+
+**Python Configuration:**
+```
+PYTHON_INTERPRETER_PATH=/usr/bin/python3.12
+PYTHONPATH=/tmp/plugin_workdir
+```
+
+### API/Worker Plugin Communication
+The API and Worker containers need these to communicate with the plugin daemon:
+```
+PLUGIN_DAEMON_URL=http://plugindaemon:5002
+PLUGIN_DAEMON_KEY=<your-plugin-daemon-key>   # Same as SERVER_KEY above
+INNER_API_KEY_FOR_PLUGIN=<your-inner-api-key>
+```
 
 ### Service Discovery
 All services communicate internally using their container names:
