@@ -12,6 +12,7 @@ resource "azurerm_container_app_environment" "dify-aca-env" {
   location                   = azurerm_resource_group.rg.location
   resource_group_name        = azurerm_resource_group.rg.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.aca-loga.id
+  internal_load_balancer_enabled = true
   infrastructure_subnet_id = azurerm_subnet.acasubnet.id
   workload_profile  {
     name = "Consumption"
