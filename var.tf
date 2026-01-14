@@ -72,7 +72,7 @@ variable "dify-api-image" {
 
 variable "dify-sandbox-image" {
   type = string
-  default = "langgenius/dify-sandbox:0.2.13"
+  default = "langgenius/dify-sandbox:0.2.12"
 }
 
 variable "dify-web-image" {
@@ -82,6 +82,5 @@ variable "dify-web-image" {
 
 variable "dify-plugin-daemon-image" {
   type = string
-  default = "langgenius/dify-plugin-daemon:0.0.9-serverless"
+  default = "langgenius/dify-plugin-daemon:0.5.2-local"
 }
-
