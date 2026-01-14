@@ -24,27 +24,6 @@ terraform plan
 terraform apply
 ```
 
----
-
-# Dify Azure Terraform
-
-Deploy [Dify](https://github.com/langgenius/dify) (v1.11.3) on Azure using Terraform.
-
-## Architecture
-
-| Component | Azure Service |
-|-----------|---------------|
-| nginx | Container Apps |
-| web | Container Apps |
-| api | Container Apps |
-| worker | Container Apps |
-| sandbox | Container Apps |
-| ssrf_proxy | Container Apps |
-| plugin_daemon | Container Apps |
-| db | PostgreSQL Flexible Server |
-| redis | Azure Cache for Redis |
-| storage | Azure Blob Storage |
-
 ## Production Variables
 
 ⚠️ **Must change for production:**
@@ -68,6 +47,28 @@ openssl rand -base64 42
 - `region` - Azure region
 - `storage-account`, `redis`, `psql-flexible` - Must be globally unique
 
+
+---
+
+# Dify Azure Terraform
+
+Deploy [Dify](https://github.com/langgenius/dify) (v1.11.3) on Azure using Terraform.
+
+## Architecture
+
+| Component | Azure Service |
+|-----------|---------------|
+| nginx | Container Apps |
+| web | Container Apps |
+| api | Container Apps |
+| worker | Container Apps |
+| sandbox | Container Apps |
+| ssrf_proxy | Container Apps |
+| plugin_daemon | Container Apps |
+| db | PostgreSQL Flexible Server |
+| redis | Azure Cache for Redis |
+| storage | Azure Blob Storage |
+
 ## Quick Start
 
 1. Copy and configure variables:
@@ -79,7 +80,7 @@ openssl rand -base64 42
 2. Deploy:
    ```bash
    terraform init
-   terraform apply
+   terraform apply # -auto-approve if # if you are lazy of saying yes everytime
    ```
 
 ## Documentation
