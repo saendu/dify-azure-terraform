@@ -67,16 +67,16 @@ variable "aca-dify-customer-domain" {
 
 variable "dify-api-image" {
   type = string
-  default = "langgenius/dify-api:0.10.0-beta3"
+  default = "langgenius/dify-api:1.11.3"
 }
 
 variable "dify-sandbox-image" {
   type = string
-  default = "langgenius/dify-sandbox:0.2.5"
+  default = "langgenius/dify-sandbox:0.2.12"
 }
 
 variable "dify-web-image" {
   type = string
-  default = "langgenius/dify-web:0.10.0-beta3"
+  default = "langgenius/dify-web:1.11.3"
 }
 
