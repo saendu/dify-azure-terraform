@@ -45,6 +45,29 @@ Deploy [Dify](https://github.com/langgenius/dify) (v1.11.3) on Azure using Terra
 | redis | Azure Cache for Redis |
 | storage | Azure Blob Storage |
 
+## Production Variables
+
+⚠️ **Must change for production:**
+
+| Variable | Description |
+|----------|-------------|
+| `subscription-id` | Your Azure subscription ID |
+| `pgsql-password` | PostgreSQL password (no default, required) |
+| `dify-secret-key` | API encryption key |
+| `dify-plugin-daemon-key` | Plugin daemon auth key |
+| `dify-inner-api-key` | Internal API key |
+| `dify-sandbox-api-key` | Sandbox execution key |
+
+Generate secure keys:
+```bash
+openssl rand -base64 42
+```
+
+**Should also review:**
+- `group-name` - Resource group name
+- `region` - Azure region
+- `storage-account`, `redis`, `psql-flexible` - Must be globally unique
+
 ## Quick Start
 
 1. Copy and configure variables:
@@ -53,14 +76,7 @@ Deploy [Dify](https://github.com/langgenius/dify) (v1.11.3) on Azure using Terra
    # Edit terraform.tfvars with your values
    ```
 
-2. Generate secret keys:
-   ```bash
-   openssl rand -base64 42  # dify-secret-key
-   openssl rand -base64 42  # dify-plugin-daemon-key
-   openssl rand -base64 42  # dify-inner-api-key
-   ```
-
-3. Deploy:
+2. Deploy:
    ```bash
    terraform init
    terraform apply
