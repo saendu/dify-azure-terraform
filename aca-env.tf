@@ -266,7 +266,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "CELERY_BROKER_URL"
-        value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
       }
       env {
         name  = "BROKER_USE_SSL"
@@ -312,7 +312,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "SERVER_KEY"
-        value = "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
+        value = random_password.plugin_daemon_key.result
       }
       env {
         name  = "DIFY_INNER_API_URL"
@@ -320,7 +320,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "DIFY_INNER_API_KEY"
-        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+        value = random_password.plugin_dify_inner_api_key.result
       }
       env {
         name  = "PLUGIN_REMOTE_INSTALLING_HOST"
@@ -424,7 +424,7 @@ resource "azurerm_container_app" "sandbox" {
       memory = "1Gi"
       env {
         name  = "API_KEY"
-        value = "dify-sandbox"
+        value = random_password.sandbox_api_key.result
       }
       env {
         name  = "GIN_MODE"
@@ -543,7 +543,7 @@ resource "azurerm_container_app" "worker" {
 
       env {
         name  = "REDIS_USE_SSL"
-        value = "false"
+        value = "true"
       }
 
       env {
@@ -553,27 +553,27 @@ resource "azurerm_container_app" "worker" {
 
       env {
         name  = "CELERY_BROKER_URL"
-        value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
       }
 
       env {
         name  = "STORAGE_TYPE"
-        value = "azure-blob"
+        value = "opendal"
       }
       env {
-        name  = "AZURE_BLOB_ACCOUNT_NAME"
+        name  = "OPENDAL_SCHEME"
+        value = "azure"
+      }
+      env {
+        name  = "OPENDAL_AZURE_ACCOUNT_NAME"
         value = azurerm_storage_account.acafileshare.name
       }
       env {
-        name  = "AZURE_BLOB_ACCOUNT_KEY"
+        name  = "OPENDAL_AZURE_ACCOUNT_KEY"
         value = azurerm_storage_account.acafileshare.primary_access_key
       }
       env {
-        name  = "AZURE_BLOB_ACCOUNT_URL"
-        value = azurerm_storage_account.acafileshare.primary_blob_endpoint
-      }
-      env {
-        name  = "AZURE_BLOB_CONTAINER_NAME"
+        name  = "OPENDAL_AZURE_CONTAINER"
         value = azurerm_storage_container.dfy.name
       }
 
@@ -616,12 +616,103 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "INNER_API_KEY_FOR_PLUGIN"
-        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+        value = random_password.plugin_dify_inner_api_key.result
       }
       
       env {
         name  = "PLUGIN_DAEMON_URL"
         value = "http://plugin-daemon:5002"
+      }
+    }
+  }
+}
+
+resource "azurerm_container_app" "dify_beat" {
+  name                         = "dify-beat"
+  container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
+
+  template {
+    max_replicas = 1
+    min_replicas = 1
+    container {
+      name   = "langgenius"
+      image  = "langgenius/dify-api:1.11.3"
+      cpu    = 2
+      memory = "4Gi"
+      env {
+        name  = "MODE"
+        value = "beat"
+      }
+      env {
+        name  = "DB_USERNAME"
+        value = azurerm_postgresql_flexible_server.postgres.administrator_login
+      }
+      env {
+        name  = "DB_PASSWORD"
+        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+      }
+      env {
+        name  = "DB_HOST"
+        value = azurerm_postgresql_flexible_server.postgres.fqdn
+      }
+      env {
+        name  = "DB_PORT"
+        value = "5432"
+      }
+
+      env {
+        name  = "DB_DATABASE"
+        value = azurerm_postgresql_flexible_server_database.difypgsqldb.name
+      }
+      env {
+        name  = "REDIS_HOST"
+        value = azurerm_redis_cache.redis.hostname
+      }
+      env {
+        name  = "REDIS_PORT"
+        value = "6379"
+      }
+      env {
+        name  = "REDIS_PASSWORD"
+        value = azurerm_redis_cache.redis.primary_access_key
+      }
+
+      env {
+        name  = "REDIS_USE_SSL"
+        value = "false"
+      }
+
+      env {
+        name  = "REDIS_DB"
+        value = "0"
+      }
+
+      env {
+        name  = "CELERY_BROKER_URL"
+        value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+      }
+
+      env {
+        name  = "STORAGE_TYPE"
+        value = "azure-blob"
+      }
+      env {
+        name  = "AZURE_BLOB_ACCOUNT_NAME"
+        value = azurerm_storage_account.acafileshare.name
+      }
+      env {
+        name  = "AZURE_BLOB_ACCOUNT_KEY"
+        value = azurerm_storage_account.acafileshare.primary_access_key
+      }
+      env {
+        name  = "AZURE_BLOB_ACCOUNT_URL"
+        value = azurerm_storage_account.acafileshare.primary_blob_endpoint
+      }
+      env {
+        name  = "AZURE_BLOB_CONTAINER_NAME"
+        value = azurerm_storage_container.dfy.name
       }
     }
   }
@@ -634,9 +725,9 @@ resource "azurerm_container_app" "api" {
   revision_mode                = "Single"
 
   template {
-    tcp_scale_rule {
+    http_scale_rule {
       name = "api"
-      concurrent_requests = "10"
+      concurrent_requests = "50"
     }
     max_replicas = 1
     min_replicas = 0
@@ -660,7 +751,7 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "CONSOLE_WEB_URL"
-        value = ""
+        value = "https://${var.aca-dify-customer-domain}"
       }
       env {
         name  = "INIT_PASSWORD"
@@ -668,7 +759,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "CONSOLE_API_URL"
-        value = ""
+        value = "https://${var.aca-dify-customer-domain}"
       }
       env {
         name  = "SERVICE_API_URL"
@@ -677,12 +768,12 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "APP_WEB_URL"
-        value = ""
+        value = "https://${var.aca-dify-customer-domain}"
       }
 
       env {
         name  = "FILES_URL"
-        value = ""
+        value = "https://${var.aca-dify-customer-domain}"
       }
 
       env {
@@ -727,7 +818,7 @@ resource "azurerm_container_app" "api" {
       
       env {
         name  = "INNER_API_KEY_FOR_PLUGIN"
-        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+        value = random_password.plugin_dify_inner_api_key.result
       }
       
       env {
@@ -781,7 +872,7 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "REDIS_USE_SSL"
-        value = "false"
+        value = "true"
       }
 
       env {
@@ -791,27 +882,27 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "CELERY_BROKER_URL"
-        value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
       }
 
       env {
         name  = "STORAGE_TYPE"
-        value = "azure-blob"
+        value = "opendal"
       }
       env {
-        name  = "AZURE_BLOB_ACCOUNT_NAME"
+        name  = "OPENDAL_SCHEME"
+        value = "azure"
+      }
+      env {
+        name  = "OPENDAL_AZURE_ACCOUNT_NAME"
         value = azurerm_storage_account.acafileshare.name
       }
       env {
-        name  = "AZURE_BLOB_ACCOUNT_KEY"
+        name  = "OPENDAL_AZURE_ACCOUNT_KEY"
         value = azurerm_storage_account.acafileshare.primary_access_key
       }
       env {
-        name  = "AZURE_BLOB_ACCOUNT_URL"
-        value = azurerm_storage_account.acafileshare.primary_blob_endpoint
-      }
-      env {
-        name  = "AZURE_BLOB_CONTAINER_NAME"
+        name  = "OPENDAL_AZURE_CONTAINER"
         value = azurerm_storage_container.dfy.name
       }
       env {
@@ -844,7 +935,7 @@ resource "azurerm_container_app" "api" {
 
       env {
         name  = "CODE_EXECUTION_API_KEY"
-        value = "dify-sandbox"
+        value = random_password.sandbox_api_key.result
       }
 
       env {
@@ -930,9 +1021,9 @@ resource "azurerm_container_app" "web" {
   revision_mode                = "Single"
 
   template {
-    tcp_scale_rule {
+    http_scale_rule {
       name = "web"
-      concurrent_requests = "10"
+      concurrent_requests = "100"
     }
     max_replicas = 1
     min_replicas = 0
@@ -943,11 +1034,11 @@ resource "azurerm_container_app" "web" {
       memory = "2Gi"
       env {
         name  = "CONSOLE_API_URL"
-        value = ""
+        value = "https://${var.aca-dify-customer-domain}"
       }
       env {
         name  = "APP_API_URL"
-        value = ""
+        value = "https://${var.aca-dify-customer-domain}"
       }
       env {
         name  = "SENTRY_DSN"

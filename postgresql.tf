@@ -35,6 +35,25 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   # depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 }
 
+resource "azurerm_private_endpoint" "postgres" {
+  name                = "pe-${var.psql-flexible}"
+  location            = azurerm_resource_group.rg.location
+  resource_group_name = azurerm_resource_group.rg.name
+  subnet_id           = azurerm_subnet.privatelinksubnet.id
+
+  private_service_connection {
+    name                           = "psc-${var.psql-flexible}"
+    private_connection_resource_id = azurerm_postgresql_flexible_server.postgres.id
+    subresource_names              = ["postgresqlServer"]
+    is_manual_connection           = false
+  }
+
+  private_dns_zone_group {
+    name                 = "postgres-zone-group"
+    private_dns_zone_ids = [azurerm_private_dns_zone.postgres.id]
+  }
+}
+
 resource "azurerm_postgresql_flexible_server_database" "difypgsqldb" {
   name      = "difypgsqldb"
   server_id = azurerm_postgresql_flexible_server.postgres.id
