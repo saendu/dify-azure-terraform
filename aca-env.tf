@@ -218,15 +218,34 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
       }
       
-      # Plugin daemon server configuration
+      # Plugin daemon server configuration (official env names)
+      env {
+        name  = "PLUGIN_DAEMON_PORT"
+        value = "5002"
+      }
       env {
         name  = "SERVER_PORT"
         value = "5002"
       }
       env {
+        name  = "PLUGIN_DAEMON_KEY"
+        value = "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
+      }
+      env {
         name  = "SERVER_KEY"
         value = "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
       }
+      
+      # Dify API communication (official env names from .env.example)
+      env {
+        name  = "PLUGIN_DIFY_INNER_API_URL"
+        value = "http://api:5001"
+      }
+      env {
+        name  = "PLUGIN_DIFY_INNER_API_KEY"
+        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+      }
+      # Legacy names for backward compatibility
       env {
         name  = "DIFY_INNER_API_URL"
         value = "http://api:5001"
@@ -234,6 +253,16 @@ resource "azurerm_container_app" "plugin_daemon" {
       env {
         name  = "DIFY_INNER_API_KEY"
         value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+      }
+      
+      # Plugin debugging configuration
+      env {
+        name  = "PLUGIN_DEBUGGING_HOST"
+        value = "0.0.0.0"
+      }
+      env {
+        name  = "PLUGIN_DEBUGGING_PORT"
+        value = "5003"
       }
       env {
         name  = "PLUGIN_REMOTE_INSTALLING_HOST"
@@ -256,6 +285,10 @@ resource "azurerm_container_app" "plugin_daemon" {
       env {
         name  = "PLUGIN_PACKAGE_CACHE_PATH"
         value = "/app/storage/plugin_packages"
+      }
+      env {
+        name  = "PLUGIN_MEDIA_CACHE_PATH"
+        value = "assets"
       }
       
       # UV package manager configuration (required for Azure Container Apps)
@@ -284,9 +317,13 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "/tmp/plugin_workdir"
       }
       
-      # Plugin execution configuration
+      # Plugin execution configuration (official env names)
       env {
         name  = "FORCE_VERIFYING_SIGNATURE"
+        value = "true"
+      }
+      env {
+        name  = "ENFORCE_LANGGENIUS_PLUGIN_SIGNATURES"
         value = "true"
       }
       env {
@@ -298,6 +335,10 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "52428800"
       }
       env {
+        name  = "PLUGIN_PYTHON_ENV_INIT_TIMEOUT"
+        value = "120"
+      }
+      env {
         name  = "PYTHON_ENV_INIT_TIMEOUT"
         value = "120"
       }
@@ -306,8 +347,32 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "600"
       }
       env {
+        name  = "PLUGIN_DAEMON_TIMEOUT"
+        value = "600.0"
+      }
+      env {
         name  = "ENDPOINT_URL_TEMPLATE"
         value = "http://nginx/e/{hook_id}"
+      }
+      
+      # Plugin stdio buffer configuration
+      env {
+        name  = "PLUGIN_STDIO_BUFFER_SIZE"
+        value = "1024"
+      }
+      env {
+        name  = "PLUGIN_STDIO_MAX_BUFFER_SIZE"
+        value = "5242880"
+      }
+      
+      # Marketplace configuration
+      env {
+        name  = "MARKETPLACE_ENABLED"
+        value = "true"
+      }
+      env {
+        name  = "MARKETPLACE_API_URL"
+        value = "https://marketplace.dify.ai"
       }
       
       # Storage configuration
@@ -318,10 +383,6 @@ resource "azurerm_container_app" "plugin_daemon" {
       env {
         name  = "PLUGIN_STORAGE_LOCAL_ROOT"
         value = "/app/storage"
-      }
-      env {
-        name  = "PLUGIN_MEDIA_CACHE_PATH"
-        value = "assets"
       }
       
       # Azure Blob storage (if needed for plugin storage)
@@ -340,6 +401,12 @@ resource "azurerm_container_app" "plugin_daemon" {
       env {
         name  = "AZURE_BLOB_CONTAINER_NAME"
         value = azurerm_storage_container.dfy.name
+      }
+      
+      # Profiling (disabled by default)
+      env {
+        name  = "PLUGIN_PPROF_ENABLED"
+        value = "false"
       }
       
       volume_mounts {
@@ -489,6 +556,12 @@ resource "azurerm_container_app" "worker" {
         value = "PRODUCTION"
       }
 
+      # INTERNAL_FILES_URL is used for plugin daemon communication within Docker network
+      env {
+        name  = "INTERNAL_FILES_URL"
+        value = "http://api:5001"
+      }
+
       # Database configuration
       env {
         name  = "DB_USERNAME"
@@ -543,6 +616,10 @@ resource "azurerm_container_app" "worker" {
       env {
         name  = "CELERY_BROKER_URL"
         value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+      }
+      env {
+        name  = "CELERY_BACKEND"
+        value = "redis"
       }
 
       # Storage configuration - Azure Blob
@@ -723,6 +800,12 @@ resource "azurerm_container_app" "api" {
         name  = "FILES_URL"
         value = ""
       }
+      # INTERNAL_FILES_URL is used for plugin daemon communication within Docker network
+      # Required for proper plugin file access
+      env {
+        name  = "INTERNAL_FILES_URL"
+        value = "http://api:5001"
+      }
       env {
         name  = "INIT_PASSWORD"
         value = ""
@@ -734,6 +817,15 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "MIGRATION_ENABLED"
         value = "true"
+      }
+      # Access token configuration
+      env {
+        name  = "ACCESS_TOKEN_EXPIRE_MINUTES"
+        value = "60"
+      }
+      env {
+        name  = "REFRESH_TOKEN_EXPIRE_DAYS"
+        value = "30"
       }
 
       # Database configuration
