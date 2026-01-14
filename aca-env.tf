@@ -191,6 +191,10 @@ resource "azurerm_container_app" "plugin_daemon" {
         name  = "DB_DATABASE"
         value = azurerm_postgresql_flexible_server_database.dify_plugin.name
       }
+      env {
+        name  = "DB_DEFAULT_DATABASE"
+        value = "postgres"
+      }
       
       # Redis configuration
       env {
@@ -218,34 +222,56 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
       }
       
-      # Plugin daemon server configuration
+      # Server configuration (correct env var names per plugin daemon config.go)
       env {
-        name  = "PLUGIN_DAEMON_PORT"
-        value = "5002"
-      }
-      env {
-        name  = "PLUGIN_DAEMON_KEY"
-        value = var.dify-plugin-daemon-key
-      }
-      
-      # Dify API communication
-      env {
-        name  = "PLUGIN_DIFY_INNER_API_URL"
-        value = "http://api:5001"
-      }
-      env {
-        name  = "PLUGIN_DIFY_INNER_API_KEY"
-        value = var.dify-inner-api-key
-      }
-      
-      # Plugin debugging configuration
-      env {
-        name  = "PLUGIN_DEBUGGING_HOST"
+        name  = "SERVER_HOST"
         value = "0.0.0.0"
       }
       env {
-        name  = "PLUGIN_DEBUGGING_PORT"
-        value = "5003"
+        name  = "SERVER_PORT"
+        value = "5002"
+      }
+      env {
+        name  = "SERVER_KEY"
+        value = var.dify-plugin-daemon-key
+      }
+      env {
+        name  = "GIN_MODE"
+        value = "release"
+      }
+      
+      # Platform configuration (required)
+      env {
+        name  = "PLATFORM"
+        value = "local"
+      }
+      
+      # Routine pool configuration (required)
+      env {
+        name  = "ROUTINE_POOL_SIZE"
+        value = "1024"
+      }
+      
+      # Local launching configuration (required for local platform)
+      env {
+        name  = "PLUGIN_LOCAL_LAUNCHING_CONCURRENT"
+        value = "4"
+      }
+      
+      # Dify API communication (correct env var names per plugin daemon config.go)
+      env {
+        name  = "DIFY_INNER_API_URL"
+        value = "http://api:5001"
+      }
+      env {
+        name  = "DIFY_INNER_API_KEY"
+        value = var.dify-inner-api-key
+      }
+      
+      # Plugin remote installing configuration
+      env {
+        name  = "PLUGIN_REMOTE_INSTALLING_ENABLED"
+        value = "true"
       }
       env {
         name  = "PLUGIN_REMOTE_INSTALLING_HOST"
@@ -310,20 +336,16 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "true"
       }
       env {
-        name  = "PLUGIN_MAX_PACKAGE_SIZE"
+        name  = "MAX_PLUGIN_PACKAGE_SIZE"
         value = "52428800"
       }
       env {
-        name  = "PLUGIN_PYTHON_ENV_INIT_TIMEOUT"
+        name  = "PYTHON_ENV_INIT_TIMEOUT"
         value = "120"
       }
       env {
         name  = "PLUGIN_MAX_EXECUTION_TIMEOUT"
         value = "600"
-      }
-      env {
-        name  = "ENDPOINT_URL_TEMPLATE"
-        value = "http://nginx/e/{hook_id}"
       }
       
       # Plugin stdio buffer configuration
@@ -334,16 +356,6 @@ resource "azurerm_container_app" "plugin_daemon" {
       env {
         name  = "PLUGIN_STDIO_MAX_BUFFER_SIZE"
         value = "5242880"
-      }
-      
-      # Marketplace configuration
-      env {
-        name  = "MARKETPLACE_ENABLED"
-        value = "true"
-      }
-      env {
-        name  = "MARKETPLACE_API_URL"
-        value = "https://marketplace.dify.ai"
       }
       
       # Storage configuration
@@ -376,7 +388,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       
       # Profiling (disabled by default)
       env {
-        name  = "PLUGIN_PPROF_ENABLED"
+        name  = "PPROF_ENABLED"
         value = "false"
       }
       
@@ -673,6 +685,10 @@ resource "azurerm_container_app" "worker" {
         value = "http://plugindaemon:5002"
       }
       env {
+        name  = "PLUGIN_DAEMON_KEY"
+        value = var.dify-plugin-daemon-key
+      }
+      env {
         name  = "PLUGIN_MAX_PACKAGE_SIZE"
         value = "52428800"
       }
@@ -965,6 +981,10 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "PLUGIN_DAEMON_URL"
         value = "http://plugindaemon:5002"
+      }
+      env {
+        name  = "PLUGIN_DAEMON_KEY"
+        value = var.dify-plugin-daemon-key
       }
       env {
         name  = "PLUGIN_REMOTE_INSTALL_HOST"
