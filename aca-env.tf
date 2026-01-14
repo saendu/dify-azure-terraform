@@ -218,41 +218,24 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
       }
       
-      # Plugin daemon server configuration (official env names)
+      # Plugin daemon server configuration
       env {
         name  = "PLUGIN_DAEMON_PORT"
         value = "5002"
       }
       env {
-        name  = "SERVER_PORT"
-        value = "5002"
-      }
-      env {
         name  = "PLUGIN_DAEMON_KEY"
-        value = "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
-      }
-      env {
-        name  = "SERVER_KEY"
-        value = "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
+        value = var.dify-plugin-daemon-key
       }
       
-      # Dify API communication (official env names from .env.example)
+      # Dify API communication
       env {
         name  = "PLUGIN_DIFY_INNER_API_URL"
         value = "http://api:5001"
       }
       env {
         name  = "PLUGIN_DIFY_INNER_API_KEY"
-        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
-      }
-      # Legacy names for backward compatibility
-      env {
-        name  = "DIFY_INNER_API_URL"
-        value = "http://api:5001"
-      }
-      env {
-        name  = "DIFY_INNER_API_KEY"
-        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+        value = var.dify-inner-api-key
       }
       
       # Plugin debugging configuration
@@ -317,7 +300,7 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "/tmp/plugin_workdir"
       }
       
-      # Plugin execution configuration (official env names)
+      # Plugin execution configuration
       env {
         name  = "FORCE_VERIFYING_SIGNATURE"
         value = "true"
@@ -331,24 +314,12 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "52428800"
       }
       env {
-        name  = "MAX_PLUGIN_PACKAGE_SIZE"
-        value = "52428800"
-      }
-      env {
         name  = "PLUGIN_PYTHON_ENV_INIT_TIMEOUT"
-        value = "120"
-      }
-      env {
-        name  = "PYTHON_ENV_INIT_TIMEOUT"
         value = "120"
       }
       env {
         name  = "PLUGIN_MAX_EXECUTION_TIMEOUT"
         value = "600"
-      }
-      env {
-        name  = "PLUGIN_DAEMON_TIMEOUT"
-        value = "600.0"
       }
       env {
         name  = "ENDPOINT_URL_TEMPLATE"
@@ -464,7 +435,7 @@ resource "azurerm_container_app" "sandbox" {
       memory = "1Gi"
       env {
         name  = "API_KEY"
-        value = "dify-sandbox"
+        value = var.dify-sandbox-api-key
       }
       env {
         name  = "GIN_MODE"
@@ -549,7 +520,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "SECRET_KEY"
-        value = "sk-9f73s3ljTXVcMT3Blb3ljTqtsKiGHXVcMT3BlbkFJLK7U"
+        value = var.dify-secret-key
       }
       env {
         name  = "DEPLOY_ENV"
@@ -673,7 +644,7 @@ resource "azurerm_container_app" "worker" {
       # Code execution configuration
       env {
         name  = "CODE_EXECUTION_API_KEY"
-        value = "dify-sandbox"
+        value = var.dify-sandbox-api-key
       }
       env {
         name  = "CODE_EXECUTION_ENDPOINT"
@@ -696,7 +667,7 @@ resource "azurerm_container_app" "worker" {
         value = "4000"
       }
 
-      # Plugin daemon configuration - Updated for 1.11.3
+      # Plugin daemon configuration
       env {
         name  = "PLUGIN_DAEMON_URL"
         value = "http://plugindaemon:5002"
@@ -707,21 +678,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "INNER_API_KEY_FOR_PLUGIN"
-        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
-      }
-
-      # Sentry configuration
-      env {
-        name  = "SENTRY_DSN"
-        value = ""
-      }
-      env {
-        name  = "SENTRY_TRACES_SAMPLE_RATE"
-        value = "1.0"
-      }
-      env {
-        name  = "SENTRY_PROFILES_SAMPLE_RATE"
-        value = "1.0"
+        value = var.dify-inner-api-key
       }
     }
   }
@@ -772,7 +729,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "SECRET_KEY"
-        value = "sk-9f73s3ljTXVcMT3Blb3ljTqtsKiGHXVcMT3BlbkFJLK7U"
+        value = var.dify-secret-key
       }
       env {
         name  = "DEPLOY_ENV"
@@ -945,7 +902,7 @@ resource "azurerm_container_app" "api" {
       # Code execution configuration
       env {
         name  = "CODE_EXECUTION_API_KEY"
-        value = "dify-sandbox"
+        value = var.dify-sandbox-api-key
       }
       env {
         name  = "CODE_EXECUTION_ENDPOINT"
@@ -1027,7 +984,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "INNER_API_KEY_FOR_PLUGIN"
-        value = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+        value = var.dify-inner-api-key
       }
 
       # Marketplace configuration

@@ -5,6 +5,20 @@ This project contains the Terraform configuration for deploying a Dify environme
 
 **Current Version: Dify 1.11.3**
 
+## Quick Start
+
+1. Copy `terraform.tfvars.example` to `terraform.tfvars`
+2. Update the required variables (especially `pgsql-password`)
+3. Generate new secret keys for production:
+   ```bash
+   openssl rand -base64 42  # For dify-secret-key
+   openssl rand -base64 42  # For dify-plugin-daemon-key
+   openssl rand -base64 42  # For dify-inner-api-key
+   ```
+4. Run `terraform init && terraform apply`
+
+⚠️ **IMPORTANT**: Never commit `terraform.tfvars` to version control!
+
 ## Infrastructure Components
 
 ### Core Resources
