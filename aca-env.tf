@@ -52,6 +52,13 @@ resource "azurerm_container_app" "nginx" {
       image  = "nginx:latest"
       cpu    = 0.5
       memory = "1Gi"
+      
+      # Config revision - change this value to force nginx to restart and reload config
+      env {
+        name  = "CONFIG_REVISION"
+        value = "2"
+      }
+      
       volume_mounts { 
         name = "nginxconf"
         path = "/etc/nginx"
