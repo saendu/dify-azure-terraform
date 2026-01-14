@@ -180,9 +180,19 @@ PYTHONPATH=/tmp/plugin_workdir
 The API and Worker containers need these to communicate with the plugin daemon:
 ```
 PLUGIN_DAEMON_URL=http://plugindaemon:5002
-PLUGIN_DAEMON_KEY=<your-plugin-daemon-key>   # Same as SERVER_KEY above
-INNER_API_KEY_FOR_PLUGIN=<your-inner-api-key>
+PLUGIN_DAEMON_KEY=<your-plugin-daemon-key>   # Must match SERVER_KEY in plugin daemon!
+INNER_API_KEY_FOR_PLUGIN=<your-inner-api-key>   # Must match DIFY_INNER_API_KEY in plugin daemon!
 ```
+
+### Environment Variable Mapping (Important!)
+The Dify API and Plugin Daemon use **different env var names** that must match:
+
+| API/Worker Container | Plugin Daemon Container | Must Match |
+|---------------------|------------------------|------------|
+| `PLUGIN_DAEMON_KEY` | `SERVER_KEY` | ✅ Yes |
+| `INNER_API_KEY_FOR_PLUGIN` | `DIFY_INNER_API_KEY` | ✅ Yes |
+| N/A | `DIFY_INNER_API_URL` | Points to API |
+| `PLUGIN_DAEMON_URL` | N/A | Points to Plugin Daemon |
 
 ### Service Discovery
 All services communicate internally using their container names:
@@ -198,8 +208,13 @@ The nginx configuration includes routing for:
 - `/api` → API service
 - `/v1` → API service (Service API)
 - `/files` → API service
-- `/e/` → API service (Plugin endpoints)
-- `/` → Web service (Frontend)
+- `/e/` → **Plugin Daemon** (Plugin webhook endpoints, NOT API!)
+- `/explore` → Web service (explicitly routed)
+- `/mcp` → API service (MCP endpoints)
+- `/triggers` → API service
+- `/` → Web service (Frontend - handles /plugins, /apps, /tools, etc.)
+
+⚠️ **Note**: The `/e/` endpoint MUST route to the plugin daemon, not the API. This is a common misconfiguration.
 
 ## Security Considerations
 1. Database credentials are managed through variables
