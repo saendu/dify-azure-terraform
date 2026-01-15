@@ -50,8 +50,8 @@ resource "azurerm_container_app" "nginx" {
     container {
       name   = "nginx"
       image  = "nginx:latest"
-      cpu    = 0.5
-      memory = "1Gi"
+      cpu    = 0.25
+      memory = "0.5Gi"
       volume_mounts { 
         name = "nginxconf"
         path = "/etc/nginx"
@@ -105,8 +105,8 @@ resource "azurerm_container_app" "ssrfproxy" {
     container {
       name   = "ssrfproxy"
       image  = "ubuntu/squid:latest"
-      cpu    = 0.5
-      memory = "1Gi"
+      cpu    = 0.25
+      memory = "0.5Gi"
       volume_mounts { 
         name = "ssrfproxy"
         path = "/etc/squid"
@@ -163,8 +163,8 @@ resource "azurerm_container_app" "plugin_daemon" {
     container {
       name   = "langgenius"
       image  = var.dify-plugin-daemon-image
-      cpu    = 1
-      memory = "2Gi"
+      cpu    = 0.5
+      memory = "1Gi"
       
       # Database configuration - Azure PostgreSQL requires SSL
       env {
@@ -514,8 +514,8 @@ resource "azurerm_container_app" "worker" {
     container {
       name   = "langgenius"
       image  = var.dify-api-image
-      cpu    = 2
-      memory = "4Gi"
+      cpu    = 1
+      memory = "2Gi"
       
       # Core configuration
       env {
@@ -718,8 +718,8 @@ resource "azurerm_container_app" "api" {
     container {
       name   = "langgenius"
       image  = var.dify-api-image
-      cpu    = 2
-      memory = "4Gi"
+      cpu    = 1
+      memory = "2Gi"
       
       volume_mounts {
         name = "api-storage"
@@ -1095,8 +1095,8 @@ resource "azurerm_container_app" "web" {
     container {
       name   = "langgenius"
       image  = var.dify-web-image
-      cpu    = 1
-      memory = "2Gi"
+      cpu    = 0.5
+      memory = "1Gi"
       
       # API URL configuration - will be proxied through nginx
       env {
