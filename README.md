@@ -13,8 +13,8 @@
 ```bash
 # Login
 az login
-az login --use-device-code --tenant sandrofelderisol.onmicrosoft.com
-az account set --subscription 76958d76-d94f-402b-a86b-fc6a720a2ba8
+az login --use-device-code --tenant <name>.onmicrosoft.com 
+az account set --subscription <subscriptionID>
 
 # Register provider (first time only)
 az provider register --namespace Microsoft.App
@@ -26,6 +26,9 @@ terraform apply
 ```
 
 ## Production Variables
+
+### Existing resource group
+terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resourceGroups/<groupName>
 
 ⚠️ **Must change for production:**
 

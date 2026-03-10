@@ -582,7 +582,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "REDIS_PORT"
-        value = "6379"
+        value = "6380"
       }
       env {
         name  = "REDIS_PASSWORD"
@@ -590,7 +590,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "REDIS_USE_SSL"
-        value = "false"
+        value = "true"
       }
       env {
         name  = "REDIS_DB"
@@ -598,7 +598,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "CELERY_BROKER_URL"
-        value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6380/1"
       }
       env {
         name  = "CELERY_BACKEND"
@@ -838,7 +838,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "REDIS_PORT"
-        value = "6379"
+        value = "6380"
       }
       env {
         name  = "REDIS_PASSWORD"
@@ -846,7 +846,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "REDIS_USE_SSL"
-        value = "false"
+        value = "true"
       }
       env {
         name  = "REDIS_DB"
@@ -854,7 +854,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "CELERY_BROKER_URL"
-        value = "redis://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6379/1"
+        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6380/1"
       }
 
       # CORS configuration
@@ -954,7 +954,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "CODE_MAX_NUMBER_ARRAY_LENGTH"
-        value = "1000"
+        value = "3000"
       }
       env {
         name  = "TEMPLATE_TRANSFORM_MAX_LENGTH"
