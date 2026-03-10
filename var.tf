@@ -5,20 +5,13 @@
 variable "subscription-id" {
   description = "Azure subscription ID"
   type        = string
-  default     = "76958d76-d94f-402b-a86b-fc6a720a2ba8"
+  default     = "<SubscriptionID>"
 }
 
 variable "group-name" {
   description = "Resource group name prefix"
   type        = string
-  default     = "dify-ina-latest"
-  type = string
-  default = "b41f99a1-c79c-41eb-8bdf-8a27f63ceae6"
-}
-
-variable "group-name" {
-  type = string
-  default = "dify-lab"
+  default     = "dify-lab"
 }
 
 ################################################################################
