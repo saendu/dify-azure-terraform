@@ -13,6 +13,7 @@
 ```bash
 # Login
 az login
+az login --use-device-code --tenant sandrofelderisol.onmicrosoft.com
 az account set --subscription 76958d76-d94f-402b-a86b-fc6a720a2ba8
 
 # Register provider (first time only)

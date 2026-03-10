@@ -12,6 +12,13 @@ variable "group-name" {
   description = "Resource group name prefix"
   type        = string
   default     = "dify-ina-latest"
+  type = string
+  default = "b41f99a1-c79c-41eb-8bdf-8a27f63ceae6"
+}
+
+variable "group-name" {
+  type = string
+  default = "dify-lab"
 }
 
 ################################################################################
@@ -37,7 +44,7 @@ variable "ip-prefix" {
 variable "storage-account" {
   description = "Storage account name for file shares and blob storage"
   type        = string
-  default     = "inalatestdifystorage"
+  default     = "labdifystorage"
 }
 
 variable "storage-account-container" {
@@ -51,9 +58,8 @@ variable "storage-account-container" {
 ################################################################################
 
 variable "redis" {
-  description = "Redis cache name"
-  type        = string
-  default     = "inalatestdifyredis"
+  type = string
+  default = "labdifyredis"
 }
 
 ################################################################################
@@ -63,7 +69,7 @@ variable "redis" {
 variable "psql-flexible" {
   description = "PostgreSQL flexible server name"
   type        = string
-  default     = "inalatestdifypsql"
+  default     = "labdifypsql"
 }
 
 variable "pgsql-user" {
@@ -86,7 +92,7 @@ variable "pgsql-password" {
 variable "aca-env" {
   description = "Container Apps environment name"
   type        = string
-  default     = "dify-ina-latest-env"
+  default     = "dify-lab-env"
 }
 
 variable "aca-loga" {
