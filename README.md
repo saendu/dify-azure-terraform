@@ -97,3 +97,33 @@ See [PROJECT.md](./PROJECT.md) for detailed configuration and troubleshooting.
 - [Dify Documentation](https://docs.dify.ai)
 - [Dify GitHub](https://github.com/langgenius/dify)
 - [Azure Container Apps](https://docs.microsoft.com/azure/container-apps)
+
+## Dify Tipps
+### Adding new Microsoft Foundry (Azure OpenAI) Models
+- **Deployment Name** (your model deployment, e.g. `gpt-5-mini`)3
+
+#### 1. Get Values from Foundry
+- **API Key**
+- **Azure OpenAI Endpoint**
+> e.g https://<resource>.openai.azure.com/openai/v1
+
+#### 2. Configure in Dify
+
+Path: `Settings → Model Provider → Add Model → Azure OpenAI`
+
+| Field               | Value |
+|--------------------|------|
+| Deployment Name     | `<deployment-name>` |
+| Model Type          | `LLM` |
+| Authorization Name  | any |
+| API Endpoint URL    | `https://<resource>.openai.azure.com/openai/v1` |
+| API Key             | `<api-key>` |
+| API Version         | (optional: automatically set on endpoint openai/v1) |
+| Base Model          | same as deployment name |
+
+---
+
+#### Notes
+- Must use **deployment name**, not model name  
+- Endpoint **must include `/openai/v1`**  
+- API version must match Azure support
