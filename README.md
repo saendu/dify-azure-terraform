@@ -2,10 +2,10 @@
 
 ## Checklist
 - [ ] Update variables in `var.tf`
-- [ ] Set passwords in `terraform.tfvars`
+- [ ] Set passwords in `terraform.tfvars` (see: Generate secure keys)
 - [ ] Clean state if needed:
 ```bash
-  rm -rf .terraform .terraform.lock.hcl terraform.tfstate
+  rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
 ```
 
 ## Commands
@@ -41,6 +41,7 @@ terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resou
 | `dify-inner-api-key` | Internal API key |
 | `dify-sandbox-api-key` | Sandbox execution key |
 
+#### Generate secure keys
 Generate secure keys and write them to `terraform.tfvars`:
 ```bash
 cat <<EOF > terraform.tfvars
