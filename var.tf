@@ -101,62 +101,66 @@ variable "aca-dify-customer-domain" {
 }
 
 ################################################################################
-# Dify Container Images (Dify 1.11.3)
+# Dify Container Images (Dify 1.14.0)
 ################################################################################
 
 variable "dify-api-image" {
   description = "Dify API container image"
   type        = string
-  default     = "langgenius/dify-api:1.11.3"
+  default     = "langgenius/dify-api:1.14.0"
 }
 
 variable "dify-sandbox-image" {
   description = "Dify sandbox container image"
   type        = string
-  default     = "langgenius/dify-sandbox:0.2.12"
+  default     = "langgenius/dify-sandbox:0.2.15"
 }
 
 variable "dify-web-image" {
   description = "Dify web frontend container image"
   type        = string
-  default     = "langgenius/dify-web:1.11.3"
+  default     = "langgenius/dify-web:1.14.0"
 }
 
 variable "dify-plugin-daemon-image" {
   description = "Dify plugin daemon container image"
   type        = string
-  default     = "langgenius/dify-plugin-daemon:0.5.2-local"
+  default     = "langgenius/dify-plugin-daemon:0.6.0-local"
 }
 
 ################################################################################
-# Dify Security Configuration (CHANGE THESE IN PRODUCTION!)
+# Dify Security Configuration
+#
+# WARNING: The defaults below are obvious placeholders. They MUST be replaced
+# in `terraform.tfvars` (or via TF_VAR_* env vars) before any non-lab use.
+# Generate strong values with: openssl rand -base64 42
 ################################################################################
 
 variable "dify-secret-key" {
-  description = "Secret key for Dify API encryption. Generate with: openssl rand -base64 42"
+  description = "Secret key for Dify API encryption. REPLACE before deploying. Generate with: openssl rand -base64 42"
   type        = string
   sensitive   = true
-  default     = "sk-9f73s3ljTXVcMT3Blb3ljTqtsKiGHXVcMT3BlbkFJLK7U"
+  default     = "replace-me-dify-secret-key-generate-with-openssl-rand-base64-42"
 }
 
 variable "dify-plugin-daemon-key" {
-  description = "Plugin daemon authentication key"
+  description = "Plugin daemon authentication key. REPLACE before deploying. Generate with: openssl rand -base64 42"
   type        = string
   sensitive   = true
-  default     = "lYkiYYT6owG+71oLerGzA7GXCgOT++6ovaezWAjpCjf+Sjc3ZtU+qUEi"
+  default     = "replace-me-dify-plugin-daemon-secret-generate-with-openssl-rand-base64-42"
 }
 
 variable "dify-inner-api-key" {
-  description = "Internal API key for plugin communication"
+  description = "Internal API key for plugin <-> API communication. REPLACE before deploying. Generate with: openssl rand -base64 42"
   type        = string
   sensitive   = true
-  default     = "QaHbTe77CtuXmsfyhR7+vRjI/+XbV1AaFy691iy+kGDv2Jvy0/eAh8Y1"
+  default     = "replace-me-dify-inner-api-secret-generate-with-openssl-rand-base64-42"
 }
 
 variable "dify-sandbox-api-key" {
-  description = "API key for sandbox code execution"
+  description = "API key for sandbox code execution. REPLACE before deploying. Generate with: openssl rand -base64 42"
   type        = string
   sensitive   = true
-  default     = "dify-sandbox"
+  default     = "replace-me-dify-sandbox-api-secret-generate-with-openssl-rand-base64-42"
 }
 

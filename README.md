@@ -4,9 +4,9 @@
 - [ ] Update variables in `var.tf`
 - [ ] Set passwords in `terraform.tfvars`
 - [ ] Clean state if needed:
-  ```bash
+```bash
   rm -rf .terraform .terraform.lock.hcl terraform.tfstate
-  ```
+```
 
 ## Commands
 
@@ -33,7 +33,7 @@ terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resou
 ⚠️ **Must change for production:**
 
 | Variable | Description |
-|----------|-------------|
+| --- | --- |
 | `subscription-id` | Your Azure subscription ID |
 | `pgsql-password` | PostgreSQL password (no default, required) |
 | `dify-secret-key` | API encryption key |
@@ -56,16 +56,17 @@ openssl rand -base64 42
 
 # Dify Azure Terraform
 
-Deploy [Dify](https://github.com/langgenius/dify) (v1.11.3) on Azure using Terraform.
+Deploy [Dify](https://github.com/langgenius/dify) (v1.14.0) on Azure using Terraform.
 
 ## Architecture
 
 | Component | Azure Service |
-|-----------|---------------|
+| --- | --- |
 | nginx | Container Apps |
 | web | Container Apps |
 | api | Container Apps |
 | worker | Container Apps |
+| worker_beat | Container Apps (singleton, scheduled tasks) |
 | sandbox | Container Apps |
 | ssrf_proxy | Container Apps |
 | plugin_daemon | Container Apps |
@@ -76,20 +77,20 @@ Deploy [Dify](https://github.com/langgenius/dify) (v1.11.3) on Azure using Terra
 ## Quick Start
 
 1. Copy and configure variables:
-   ```bash
+```bash
    cp terraform.tfvars.example terraform.tfvars
    # Edit terraform.tfvars with your values
-   ```
+```
 
 2. Deploy:
-   ```bash
+```bash
    terraform init
    terraform apply # -auto-approve if # if you are lazy of saying yes everytime
-   ```
+```
 
 ## Documentation
 
-See [PROJECT.md](PROJECT.md) for detailed configuration and troubleshooting.
+See [PROJECT.md](./PROJECT.md) for detailed configuration and troubleshooting.
 
 ## References
 
