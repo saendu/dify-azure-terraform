@@ -71,11 +71,6 @@ resource "azurerm_container_app" "nginx" {
       latest_revision = true
     }
     transport = "auto"
-
-    /* custom_domain {
-      name = var.aca-dify-customer-domain
-      certificate_id = azurerm_container_app_environment_certificate.difycerts.id
-    } */
   }
 }
 

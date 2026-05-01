@@ -94,12 +94,6 @@ variable "aca-loga" {
   default     = "dify-loga"
 }
 
-variable "aca-dify-customer-domain" {
-  description = "Custom domain for Dify application"
-  type        = string
-  default     = "agents.innoarchitects.ch"
-}
-
 ################################################################################
 # Dify Container Images (Dify 1.14.0)
 ################################################################################
