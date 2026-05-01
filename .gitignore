@@ -3,3 +3,4 @@ terraform.*
 .terraform/**
 .DS_Store
 dify-docker/**
+terraform.tfvars

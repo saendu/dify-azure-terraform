@@ -72,7 +72,7 @@ variable "pgsql-user" {
 }
 
 variable "pgsql-password" {
-  description = "PostgreSQL administrator password (CHANGE THIS!)"
+  description = "PostgreSQL administrator password (CHANGE THIS! See README.md)"
   type        = string
   sensitive   = true
   # No default - must be provided at deployment time

@@ -41,9 +41,15 @@ terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resou
 | `dify-inner-api-key` | Internal API key |
 | `dify-sandbox-api-key` | Sandbox execution key |
 
-Generate secure keys:
+Generate secure keys and write them to `terraform.tfvars`:
 ```bash
-openssl rand -base64 42
+cat <<EOF > terraform.tfvars
+pgsql-password         = "$(openssl rand -base64 24 | tr -d '/+=' | head -c 32)"
+dify-secret-key        = "$(openssl rand -base64 42)"
+dify-plugin-daemon-key = "$(openssl rand -base64 42)"
+dify-inner-api-key     = "$(openssl rand -base64 42)"
+dify-sandbox-api-key   = "$(openssl rand -base64 42)"
+EOF
 ```
 
 **Should also review:**
