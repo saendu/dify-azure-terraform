@@ -22,7 +22,7 @@ az provider register --namespace Microsoft.App
 # Deploy
 terraform init
 terraform plan
-terraform apply
+terraform apply # -auto-approve
 ```
 
 ## Production Variables
