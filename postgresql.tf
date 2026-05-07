@@ -61,3 +61,10 @@ resource "azurerm_postgresql_flexible_server_configuration" "extension" {
   server_id = azurerm_postgresql_flexible_server.postgres.id
   value     = "vector,uuid-ossp"
 }
+
+resource "azurerm_postgresql_flexible_server_database" "dify_plugin" {
+  name      = "dify_plugin"
+  server_id = azurerm_postgresql_flexible_server.postgres.id
+  collation = "en_US.utf8"
+  charset   = "utf8"
+}

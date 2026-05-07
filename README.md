@@ -1,177 +1,136 @@
 # Notes Sändu
 
-## Todos
-[] Change variables in var.tf
-[] Change all passwords
-[] Delete folders 
-    - .terraform
-    - .terraform.lock.hcl 
-    - terraform.tfstate
-    - terraform.tfstate.backup
+## Checklist
+- [ ] Update variables in `var.tf`
+- [ ] Set passwords in `terraform.tfvars` (see: Generate secure keys)
+- [ ] Clean state if needed:
+```bash
+  rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup
+```
 
-## Terraform
+## Commands
+
+```bash
+# Login
 az login
-az login --use-device-code --tenant <name>.onmicrosoft.com  
-az account set --subscription 76958d76-d94f-402b-a86b-fc6a720a2ba8
+az login --use-device-code --tenant <name>.onmicrosoft.com 
+az account set --subscription <subscriptionID>
 
-### requirements
+# Register provider (first time only)
 az provider register --namespace Microsoft.App
-az provider show --namespace Microsoft.App
 
-### run script
+# Deploy
 terraform init
 terraform plan
-terraform apply
+terraform apply # -auto-approve
+```
 
-#### Existing resource group
+## Production Variables
+
+### Existing resource group
 terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resourceGroups/<groupName>
 
-## ChatSource
-https://chatgpt.com/g/g-VIsiBgv06-azure-expert/c/0289d230-55bf-4131-88b3-46dc21419275
+⚠️ **Must change for production:**
 
-## Create Self-Signed Certificate in Azure Key Vault
-az keyvault certificate create --vault-name <your-key-vault-name> --name <certificate-name> --policy "$(az keyvault certificate get-default-policy)"
+| Variable | Description |
+| --- | --- |
+| `subscription-id` | Your Azure subscription ID |
+| `pgsql-password` | PostgreSQL password (no default, required) |
+| `dify-secret-key` | API encryption key |
+| `dify-plugin-daemon-key` | Plugin daemon auth key |
+| `dify-inner-api-key` | Internal API key |
+| `dify-sandbox-api-key` | Sandbox execution key |
 
-## Download the Certificate as PFX File
-az keyvault secret download --vault-name <your-key-vault-name> --name <certificate-name> --file <output-file.pfx> --encoding base64
+#### Generate secure keys
+Generate secure keys and write them to `terraform.tfvars`:
+```bash
+cat <<EOF > terraform.tfvars
+pgsql-password         = "$(openssl rand -base64 24 | tr -d '/+=' | head -c 32)"
+dify-secret-key        = "$(openssl rand -base64 42)"
+dify-plugin-daemon-key = "$(openssl rand -base64 42)"
+dify-inner-api-key     = "$(openssl rand -base64 42)"
+dify-sandbox-api-key   = "$(openssl rand -base64 42)"
+EOF
+```
 
-## Extract the Private Key and Certificate
-openssl pkcs12 -in output-file.pfx -nocerts -out private-key.pem -nodes
-openssl pkcs12 -in output-file.pfx -nokeys -out certificate.pem
+**Should also review:**
+- `group-name` - Resource group name
+- `region` - Azure region
+- `storage-account`, `redis`, `psql-flexible` - Must be globally unique
 
-## Combine the Private Key and Certificate into a Single PEM File
-cat private-key.pem certificate.pem > combined.pem
 
-## Export the Combined PEM to a New PFX File with a Password
-openssl pkcs12 -export -in combined.pem -out new-output-file.pfx -password pass:Test0001
+---
 
-# dify-azure-terraform
-Deploy [langgenius/dify](https://github.com/langgenius/dify), an LLM based chat bot app on Azure with terraform.
+# Dify Azure Terraform
 
-### Topology
-Front-end access:
-- nginx -> Azure Container Apps (Serverless)
+Deploy [Dify](https://github.com/langgenius/dify) (v1.14.0) on Azure using Terraform.
 
-Back-end components:
-- web -> Azure Container Apps (Serverless)
-- api -> Azure Container Apps (Serverless)
-- worker -> Azure Container Apps (minimum of 1 instance)
-- sandbox -> Azure Container Apps (Serverless)
-- ssrf_proxy -> Azure Container Apps (Serverless)
-- db -> Azure Database for PostgreSQL
-- vectordb -> Azure Database for PostgreSQL
-- redis -> Azure Cache for Redis
+## Architecture
 
-Before you provision Dify, please check and set the variables in var.tf file.
+| Component | Azure Service |
+| --- | --- |
+| nginx | Container Apps |
+| web | Container Apps |
+| api | Container Apps |
+| worker | Container Apps |
+| worker_beat | Container Apps (singleton, scheduled tasks) |
+| sandbox | Container Apps |
+| ssrf_proxy | Container Apps |
+| plugin_daemon | Container Apps |
+| db | PostgreSQL Flexible Server |
+| redis | Azure Cache for Redis |
+| storage | Azure Blob Storage |
 
-### Terraform Variables Documentation
+## Quick Start
 
-This document provides detailed descriptions of the variables used in the Terraform configuration for setting up the Dify environment.
+1. Copy and configure variables:
+```bash
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your values
+```
 
-#### Subscription ID
+2. Deploy:
+```bash
+   terraform init
+   terraform apply # -auto-approve if # if you are lazy of saying yes everytime
+```
 
-- **Variable Name**: `subscription-id`
-- **Type**: `string`
-- **Default Value**: `0000000000000`
+## Documentation
 
-#### Virtual Network Variables
+See [PROJECT.md](./PROJECT.md) for detailed configuration and troubleshooting.
 
-##### Region
+## References
 
-- **Variable Name**: `region`
-- **Type**: `string`
-- **Default Value**: `japaneast`
+- [Dify Documentation](https://docs.dify.ai)
+- [Dify GitHub](https://github.com/langgenius/dify)
+- [Azure Container Apps](https://docs.microsoft.com/azure/container-apps)
 
-##### VNET Address IP Prefix
+## Dify Tipps
+### Adding new Microsoft Foundry (Azure OpenAI) Models
+- **Deployment Name** (your model deployment, e.g. `gpt-5-mini`)3
 
-- **Variable Name**: `ip-prefix`
-- **Type**: `string`
-- **Default Value**: `10.99`
+#### 1. Get Values from Foundry
+- **API Key**
+- **Azure OpenAI Endpoint**
+> e.g https://<resource>.openai.azure.com/openai/v1
 
-#### Storage Account
+#### 2. Configure in Dify
 
-- **Variable Name**: `storage-account`
-- **Type**: `string`
-- **Default Value**: `acadifytest`
+Path: `Settings → Model Provider → Add Model → Azure OpenAI`
 
-##### Storage Account Container
+| Field               | Value |
+|--------------------|------|
+| Deployment Name     | `<deployment-name>` |
+| Model Type          | `LLM` |
+| Authorization Name  | any |
+| API Endpoint URL    | `https://<resource>.openai.azure.com/openai/v1` |
+| API Key             | `<api-key>` |
+| API Version         | (optional: automatically set on endpoint openai/v1) |
+| Base Model          | same as deployment name |
 
-- **Variable Name**: `storage-account-container`
-- **Type**: `string`
-- **Default Value**: `dfy`
+---
 
-#### Redis
-
-- **Variable Name**: `redis`
-- **Type**: `string`
-- **Default Value**: `acadifyredis`
-
-#### PostgreSQL Flexible Server
-
-- **Variable Name**: `psql-flexible`
-- **Type**: `string`
-- **Default Value**: `acadifypsql`
-
-##### PostgreSQL User
-
-- **Variable Name**: `pgsql-user`
-- **Type**: `string`
-- **Default Value**: `user`
-
-##### PostgreSQL Password
-
-- **Variable Name**: `pgsql-password`
-- **Type**: `string`
-- **Default Value**: `#QWEASDasdqwe`
-
-#### ACA Environment Variables
-
-##### ACA Environment
-
-- **Variable Name**: `aca-env`
-- **Type**: `string`
-- **Default Value**: `dify-aca-env`
-
-##### ACA Log Analytics Workspace
-
-- **Variable Name**: `aca-loga`
-- **Type**: `string`
-- **Default Value**: `dify-loga`
-
-##### ACA Certificate Path
-
-- **Variable Name**: `aca-cert-path`
-- **Type**: `string`
-- **Default Value**: `./certs/difycert.pfx`
-
-##### ACA Certificate Password
-
-- **Variable Name**: `aca-cert-password`
-- **Type**: `string`
-- **Default Value**: `password`
-
-##### ACA Dify Customer Domain
-
-- **Variable Name**: `aca-dify-customer-domain`
-- **Type**: `string`
-- **Default Value**: `dify.nikadwang.com`
-
-#### Container Images
-
-##### Dify API Image
-
-- **Variable Name**: `dify-api-image`
-- **Type**: `string`
-- **Default Value**: `langgenius/dify-api:0.6.16`
-
-##### Dify Sandbox Image
-
-- **Variable Name**: `dify-sandbox-image`
-- **Type**: `string`
-- **Default Value**: `langgenius/dify-sandbox:0.2.1`
-
-##### Dify Web Image
-
-- **Variable Name**: `dify-web-image`
-- **Type**: `string`
-- **Default Value**: `langgenius/dify-web:0.6.16`
+#### Notes
+- Must use **deployment name**, not model name  
+- Endpoint **must include `/openai/v1`**  
+- API version must match Azure support

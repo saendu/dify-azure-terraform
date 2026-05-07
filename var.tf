@@ -1,82 +1,160 @@
+################################################################################
+# Azure Subscription & Resource Group
+################################################################################
+
 variable "subscription-id" {
-  type = string
-  default = "76958d76-d94f-402b-a86b-fc6a720a2ba8"
+  description = "Azure subscription ID"
+  type        = string
+  default     = "<SubscriptionID>"
 }
 
 variable "group-name" {
-  type = string
-  default = "dify-ina"
+  description = "Resource group name prefix"
+  type        = string
+  default     = "dify-lab"
 }
 
-#virtual network variables
+################################################################################
+# Virtual Network Configuration
+################################################################################
+
 variable "region" {
-  type = string
-  default = "switzerlandnorth"
+  description = "Azure region for deployment"
+  type        = string
+  default     = "switzerlandnorth"
 }
 
 variable "ip-prefix" {
-  type = string
-  default = "10.99"
+  description = "IP prefix for VNET (first two octets)"
+  type        = string
+  default     = "10.99"
 }
-#end virtual network variables
+
+################################################################################
+# Storage Configuration
+################################################################################
 
 variable "storage-account" {
-  type = string
-  default = "inadifystorage"
+  description = "Storage account name for file shares and blob storage"
+  type        = string
+  default     = "labdifystorage"
 }
 
 variable "storage-account-container" {
-  type = string
-  default = "dfy"
+  description = "Blob container name for Dify files"
+  type        = string
+  default     = "dfy"
 }
+
+################################################################################
+# Redis Configuration
+################################################################################
 
 variable "redis" {
   type = string
-  default = "inadifyredis"
+  default = "labdifyredis"
 }
 
+################################################################################
+# PostgreSQL Configuration
+################################################################################
+
 variable "psql-flexible" {
-  type = string
-  default = "inadifypsql"
+  description = "PostgreSQL flexible server name"
+  type        = string
+  default     = "labdifypsql"
 }
 
 variable "pgsql-user" {
-  type = string
-  default = "user"
+  description = "PostgreSQL administrator username"
+  type        = string
+  default     = "difyadmin"
 }
 
 variable "pgsql-password" {
-  type = string
-  default = "Test0001"
+  description = "PostgreSQL administrator password (CHANGE THIS! See README.md)"
+  type        = string
+  sensitive   = true
+  # No default - must be provided at deployment time
 }
 
+################################################################################
+# Azure Container Apps Configuration
+################################################################################
+
 variable "aca-env" {
-  type = string
-  default = "dify-ina-env"
+  description = "Container Apps environment name"
+  type        = string
+  default     = "dify-lab-env"
 }
 
 variable "aca-loga" {
-  type = string
-  default = "dify-loga"
+  description = "Log Analytics workspace name"
+  type        = string
+  default     = "dify-loga"
 }
 
-variable "aca-dify-customer-domain" {
-  type = string
-  default = "agents.innoarchitects.ch"
-}
+################################################################################
+# Dify Container Images (Dify 1.14.0)
+################################################################################
 
 variable "dify-api-image" {
-  type = string
-  default = "langgenius/dify-api:1.11.3"
+  description = "Dify API container image"
+  type        = string
+  default     = "langgenius/dify-api:1.14.0"
 }
 
 variable "dify-sandbox-image" {
-  type = string
-  default = "langgenius/dify-sandbox:0.2.12"
+  description = "Dify sandbox container image"
+  type        = string
+  default     = "langgenius/dify-sandbox:0.2.15"
 }
 
 variable "dify-web-image" {
-  type = string
-  default = "langgenius/dify-web:1.11.3"
+  description = "Dify web frontend container image"
+  type        = string
+  default     = "langgenius/dify-web:1.14.0"
+}
+
+variable "dify-plugin-daemon-image" {
+  description = "Dify plugin daemon container image"
+  type        = string
+  default     = "langgenius/dify-plugin-daemon:0.6.0-local"
+}
+
+################################################################################
+# Dify Security Configuration
+#
+# WARNING: The defaults below are obvious placeholders. They MUST be replaced
+# in `terraform.tfvars` (or via TF_VAR_* env vars) before any non-lab use.
+# Generate strong values with: openssl rand -base64 42
+################################################################################
+
+variable "dify-secret-key" {
+  description = "Secret key for Dify API encryption. REPLACE before deploying. Generate with: openssl rand -base64 42"
+  type        = string
+  sensitive   = true
+  default     = "replace-me-dify-secret-key-generate-with-openssl-rand-base64-42"
+}
+
+variable "dify-plugin-daemon-key" {
+  description = "Plugin daemon authentication key. REPLACE before deploying. Generate with: openssl rand -base64 42"
+  type        = string
+  sensitive   = true
+  default     = "replace-me-dify-plugin-daemon-secret-generate-with-openssl-rand-base64-42"
+}
+
+variable "dify-inner-api-key" {
+  description = "Internal API key for plugin <-> API communication. REPLACE before deploying. Generate with: openssl rand -base64 42"
+  type        = string
+  sensitive   = true
+  default     = "replace-me-dify-inner-api-secret-generate-with-openssl-rand-base64-42"
+}
+
+variable "dify-sandbox-api-key" {
+  description = "API key for sandbox code execution. REPLACE before deploying. Generate with: openssl rand -base64 42"
+  type        = string
+  sensitive   = true
+  default     = "replace-me-dify-sandbox-api-secret-generate-with-openssl-rand-base64-42"
 }
 
