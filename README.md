@@ -23,6 +23,12 @@ az provider register --namespace Microsoft.App
 terraform init
 terraform plan
 terraform apply # -auto-approve
+
+# reset password
+dify-azure-terraform % az containerapp exec --name api --resource-group rg-dify-lab --command bash
+# bash run
+flask reset-password
+# now follow instructions (enter email, new password, ...)
 ```
 
 ## Production Variables
