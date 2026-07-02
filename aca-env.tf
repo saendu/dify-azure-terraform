@@ -1,5 +1,5 @@
 resource "azurerm_log_analytics_workspace" "aca-loga" {
-  name                = var.aca-loga
+  name                = local.aca_log_analytics_name
   location            = azurerm_resource_group.rg.location
   resource_group_name = azurerm_resource_group.rg.name
   sku                 = "PerGB2018"
@@ -8,7 +8,7 @@ resource "azurerm_log_analytics_workspace" "aca-loga" {
 
 
 resource "azurerm_container_app_environment" "dify-aca-env" {
-  name                       = var.aca-env
+  name                       = local.aca_environment_name
   location                   = azurerm_resource_group.rg.location
   resource_group_name        = azurerm_resource_group.rg.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.aca-loga.id
@@ -30,7 +30,7 @@ resource "azurerm_container_app_environment_storage" "nginxfileshare" {
   account_name                 = azurerm_storage_account.acafileshare.name
   # share_name = 
   share_name  = module.nginx_fileshare.share_name
-  access_key  = azurerm_storage_account.acafileshare.primary_access_key
+  access_key  = azurerm_key_vault_secret.storage_account_key.value
   access_mode = "ReadWrite"
 }
 
@@ -80,7 +80,7 @@ resource "azurerm_container_app_environment_storage" "ssrfproxyfileshare" {
   account_name                 = azurerm_storage_account.acafileshare.name
   # share_name = 
   share_name  = module.ssrf_proxy_fileshare.share_name
-  access_key  = azurerm_storage_account.acafileshare.primary_access_key
+  access_key  = azurerm_key_vault_secret.storage_account_key.value
   access_mode = "ReadWrite"
 }
 
@@ -129,7 +129,7 @@ resource "azurerm_container_app_environment_storage" "plugindaemonfileshare" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   account_name                 = azurerm_storage_account.acafileshare.name
   share_name                   = module.plugin_daemon_fileshare.share_name
-  access_key                   = azurerm_storage_account.acafileshare.primary_access_key
+  access_key                   = azurerm_key_vault_secret.storage_account_key.value
   access_mode                  = "ReadWrite"
 }
 
@@ -138,7 +138,7 @@ resource "azurerm_container_app_environment_storage" "apistoragefileshare" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   account_name                 = azurerm_storage_account.acafileshare.name
   share_name                   = azurerm_storage_share.api_storage.name
-  access_key                   = azurerm_storage_account.acafileshare.primary_access_key
+  access_key                   = azurerm_key_vault_secret.storage_account_key.value
   access_mode                  = "ReadWrite"
 }
 
@@ -172,7 +172,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "DB_PASSWORD"
-        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+        value = azurerm_key_vault_secret.postgres_password.value
       }
       env {
         name  = "DB_HOST"
@@ -202,7 +202,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "REDIS_PASSWORD"
-        value = azurerm_redis_cache.redis.primary_access_key
+        value = azurerm_key_vault_secret.redis_primary_key.value
       }
       env {
         name  = "REDIS_USE_SSL"
@@ -214,7 +214,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "CELERY_BROKER_URL"
-        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6380/1"
+        value = "rediss://:${azurerm_key_vault_secret.redis_primary_key.value}@${azurerm_redis_cache.redis.hostname}:6380/1"
       }
 
       # Server configuration (correct env var names per plugin daemon config.go)
@@ -228,7 +228,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "SERVER_KEY"
-        value = var.dify-plugin-daemon-key
+        value = azurerm_key_vault_secret.dify_plugin_daemon_key.value
       }
       env {
         name  = "GIN_MODE"
@@ -260,7 +260,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "DIFY_INNER_API_KEY"
-        value = var.dify-inner-api-key
+        value = azurerm_key_vault_secret.dify_inner_api_key.value
       }
 
       # Plugin remote installing configuration
@@ -370,7 +370,7 @@ resource "azurerm_container_app" "plugin_daemon" {
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_KEY"
-        value = azurerm_storage_account.acafileshare.primary_access_key
+        value = azurerm_key_vault_secret.storage_account_key.value
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_URL"
@@ -418,7 +418,7 @@ resource "azurerm_container_app_environment_storage" "sandboxfileshare" {
   account_name                 = azurerm_storage_account.acafileshare.name
   # share_name = 
   share_name  = module.sandbox_fileshare.share_name
-  access_key  = azurerm_storage_account.acafileshare.primary_access_key
+  access_key  = azurerm_key_vault_secret.storage_account_key.value
   access_mode = "ReadWrite"
 }
 
@@ -442,7 +442,7 @@ resource "azurerm_container_app" "sandbox" {
       memory = "1Gi"
       env {
         name  = "API_KEY"
-        value = var.dify-sandbox-api-key
+        value = azurerm_key_vault_secret.dify_sandbox_api_key.value
       }
       env {
         name  = "GIN_MODE"
@@ -527,7 +527,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "SECRET_KEY"
-        value = var.dify-secret-key
+        value = azurerm_key_vault_secret.dify_secret_key.value
       }
       env {
         name  = "DEPLOY_ENV"
@@ -547,7 +547,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "DB_PASSWORD"
-        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+        value = azurerm_key_vault_secret.postgres_password.value
       }
       env {
         name  = "DB_HOST"
@@ -581,7 +581,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "REDIS_PASSWORD"
-        value = azurerm_redis_cache.redis.primary_access_key
+        value = azurerm_key_vault_secret.redis_primary_key.value
       }
       env {
         name  = "REDIS_USE_SSL"
@@ -593,7 +593,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "CELERY_BROKER_URL"
-        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6380/1"
+        value = "rediss://:${azurerm_key_vault_secret.redis_primary_key.value}@${azurerm_redis_cache.redis.hostname}:6380/1"
       }
       env {
         name  = "CELERY_BACKEND"
@@ -611,7 +611,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_KEY"
-        value = azurerm_storage_account.acafileshare.primary_access_key
+        value = azurerm_key_vault_secret.storage_account_key.value
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_URL"
@@ -641,7 +641,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "PGVECTOR_PASSWORD"
-        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+        value = azurerm_key_vault_secret.postgres_password.value
       }
       env {
         name  = "PGVECTOR_DATABASE"
@@ -651,7 +651,7 @@ resource "azurerm_container_app" "worker" {
       # Code execution configuration
       env {
         name  = "CODE_EXECUTION_API_KEY"
-        value = var.dify-sandbox-api-key
+        value = azurerm_key_vault_secret.dify_sandbox_api_key.value
       }
       env {
         name  = "CODE_EXECUTION_ENDPOINT"
@@ -681,7 +681,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "PLUGIN_DAEMON_KEY"
-        value = var.dify-plugin-daemon-key
+        value = azurerm_key_vault_secret.dify_plugin_daemon_key.value
       }
       env {
         name  = "PLUGIN_MAX_PACKAGE_SIZE"
@@ -689,7 +689,7 @@ resource "azurerm_container_app" "worker" {
       }
       env {
         name  = "INNER_API_KEY_FOR_PLUGIN"
-        value = var.dify-inner-api-key
+        value = azurerm_key_vault_secret.dify_inner_api_key.value
       }
 
       # Celery worker configuration (Dify 1.14.0 default raised to 4)
@@ -740,7 +740,7 @@ resource "azurerm_container_app" "worker_beat" {
       }
       env {
         name  = "SECRET_KEY"
-        value = var.dify-secret-key
+        value = azurerm_key_vault_secret.dify_secret_key.value
       }
       env {
         name  = "DEPLOY_ENV"
@@ -754,7 +754,7 @@ resource "azurerm_container_app" "worker_beat" {
       }
       env {
         name  = "DB_PASSWORD"
-        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+        value = azurerm_key_vault_secret.postgres_password.value
       }
       env {
         name  = "DB_HOST"
@@ -788,7 +788,7 @@ resource "azurerm_container_app" "worker_beat" {
       }
       env {
         name  = "REDIS_PASSWORD"
-        value = azurerm_redis_cache.redis.primary_access_key
+        value = azurerm_key_vault_secret.redis_primary_key.value
       }
       env {
         name  = "REDIS_USE_SSL"
@@ -804,7 +804,7 @@ resource "azurerm_container_app" "worker_beat" {
       }
       env {
         name  = "CELERY_BROKER_URL"
-        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6380/1"
+        value = "rediss://:${azurerm_key_vault_secret.redis_primary_key.value}@${azurerm_redis_cache.redis.hostname}:6380/1"
       }
       env {
         name  = "CELERY_BACKEND"
@@ -822,7 +822,7 @@ resource "azurerm_container_app" "worker_beat" {
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_KEY"
-        value = azurerm_storage_account.acafileshare.primary_access_key
+        value = azurerm_key_vault_secret.storage_account_key.value
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_URL"
@@ -891,7 +891,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "SECRET_KEY"
-        value = var.dify-secret-key
+        value = azurerm_key_vault_secret.dify_secret_key.value
       }
       env {
         name  = "DEPLOY_ENV"
@@ -954,7 +954,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "DB_PASSWORD"
-        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+        value = azurerm_key_vault_secret.postgres_password.value
       }
       env {
         name  = "DB_HOST"
@@ -988,7 +988,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "REDIS_PASSWORD"
-        value = azurerm_redis_cache.redis.primary_access_key
+        value = azurerm_key_vault_secret.redis_primary_key.value
       }
       env {
         name  = "REDIS_USE_SSL"
@@ -1000,7 +1000,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "CELERY_BROKER_URL"
-        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6380/1"
+        value = "rediss://:${azurerm_key_vault_secret.redis_primary_key.value}@${azurerm_redis_cache.redis.hostname}:6380/1"
       }
 
       # CORS configuration
@@ -1024,7 +1024,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_KEY"
-        value = azurerm_storage_account.acafileshare.primary_access_key
+        value = azurerm_key_vault_secret.storage_account_key.value
       }
       env {
         name  = "AZURE_BLOB_ACCOUNT_URL"
@@ -1054,7 +1054,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "PGVECTOR_PASSWORD"
-        value = azurerm_postgresql_flexible_server.postgres.administrator_password
+        value = azurerm_key_vault_secret.postgres_password.value
       }
       env {
         name  = "PGVECTOR_DATABASE"
@@ -1064,7 +1064,7 @@ resource "azurerm_container_app" "api" {
       # Code execution configuration
       env {
         name  = "CODE_EXECUTION_API_KEY"
-        value = var.dify-sandbox-api-key
+        value = azurerm_key_vault_secret.dify_sandbox_api_key.value
       }
       env {
         name  = "CODE_EXECUTION_ENDPOINT"
@@ -1130,7 +1130,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "PLUGIN_DAEMON_KEY"
-        value = var.dify-plugin-daemon-key
+        value = azurerm_key_vault_secret.dify_plugin_daemon_key.value
       }
       env {
         name  = "PLUGIN_REMOTE_INSTALL_HOST"
@@ -1150,7 +1150,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "INNER_API_KEY_FOR_PLUGIN"
-        value = var.dify-inner-api-key
+        value = azurerm_key_vault_secret.dify_inner_api_key.value
       }
 
       # Marketplace configuration

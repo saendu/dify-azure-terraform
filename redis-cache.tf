@@ -5,19 +5,25 @@
 # }
 
 #create azure redis cache with vnet integration
+resource "random_string" "redis_suffix" {
+  length  = 5
+  upper   = false
+  special = false
+}
+
 resource "azurerm_redis_cache" "redis" {
-  name                = var.redis
-  resource_group_name = azurerm_resource_group.rg.name
-  location            = azurerm_resource_group.rg.location
-  capacity            = 0
-  family              = "C"
-  sku_name            = "Standard"
-  enable_non_ssl_port = false
-  minimum_tls_version = "1.2"
+  name                 = substr("${local.redis_name}-${random_string.redis_suffix.result}", 0, 63)
+  resource_group_name  = azurerm_resource_group.rg.name
+  location             = azurerm_resource_group.rg.location
+  capacity             = 0
+  family               = "C"
+  sku_name             = "Standard"
+  non_ssl_port_enabled = false
+  minimum_tls_version  = "1.2"
 
   public_network_access_enabled = false
-  redis_version       = "6"
-  
+  redis_version                 = "6"
+
   # subnet_id           = azurerm_subnet.redissubnet.id
   # zones               = [ "1" ]
 
@@ -51,7 +57,7 @@ resource "azurerm_private_dns_zone" "redis" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "redis-vnet" {
-  name                  = "redis-dns-link"
+  name = "redis-dns-link"
 
   resource_group_name   = azurerm_resource_group.rg.name
   private_dns_zone_name = azurerm_private_dns_zone.redis.name
@@ -63,7 +69,7 @@ output "redis_cache_hostname" {
 }
 
 output "redis_cache_key" {
-  value = azurerm_redis_cache.redis.primary_access_key
+  value     = azurerm_redis_cache.redis.primary_access_key
   sensitive = true
 }
 
