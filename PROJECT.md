@@ -3,7 +3,7 @@
 ## Overview
 This project contains the Terraform configuration for deploying a Dify environment on Azure. Dify is an open-source LLM application development platform that provides a complete solution for building AI applications.
 
-**Current Version: Dify 1.14.0**
+**Current Version: Dify 1.16.0-rc1**
 
 ## Quick Start
 
@@ -80,44 +80,60 @@ This project contains the Terraform configuration for deploying a Dify environme
 
 #### 3. Sandbox
 - **Role**: Isolated environment for code execution
-- **Image**: langgenius/dify-sandbox:0.2.12
+- **Image**: langgenius/dify-sandbox:0.2.15
 - **Scaling**: 1-10 replicas
 - **Features**: Network access through SSRF proxy
 
-#### 4. Plugin Daemon (New in Dify 1.x)
+#### 4. Plugin Daemon
 - **Role**: Plugin execution and management
-- **Image**: langgenius/dify-plugin-daemon:0.6.0-local
+- **Image**: langgenius/dify-plugin-daemon:0.6.3-local
 - **Scaling**: 1-10 replicas
 - **Critical Settings**:
   - `DB_SSL_MODE=require` (Required for Azure PostgreSQL)
   - UV package manager with copy mode (no symlinks)
   - Plugin working paths in `/tmp` for Azure compatibility
-  - Correct env var names (see configuration section below)
+  - PyPI mirror auto-detection (`PIP_MIRROR_AUTO_DETECT=true`)
 
 #### 5. Worker
 - **Role**: Background job processing (Celery)
-- **Image**: langgenius/dify-api:1.14.0
+- **Image**: langgenius/dify-api:1.16.0-rc1
 - **Scaling**: 1-10 replicas
 - **Mode**: worker
+- **Note**: Listens to all Celery queues including `workflow_based_app_execution` and `api_token`
 
-#### 6. Worker Beat (New in Dify 1.14.0)
+#### 6. Worker Beat
 - **Role**: Celery scheduled task dispatcher
-- **Image**: langgenius/dify-api:1.14.0
+- **Image**: langgenius/dify-api:1.16.0-rc1
 - **Scaling**: Singleton (min=max=1) — beat MUST run as a single replica
 - **Mode**: beat
 - **Drives**: workflow log cleanup, sandbox expired-record cleanup, human-input timeout tasks
 
 #### 7. API
 - **Role**: Main application API
-- **Image**: langgenius/dify-api:1.14.0
+- **Image**: langgenius/dify-api:1.16.0-rc1
 - **Scaling**: 1-10 replicas
 - **Mode**: api
-- **Features**: Migration enabled, marketplace integration
+- **Features**: Migration enabled, marketplace integration, Agent backend integration
 
 #### 8. Web
 - **Role**: Frontend application
-- **Image**: langgenius/dify-web:1.14.0
+- **Image**: langgenius/dify-web:1.16.0-rc1
 - **Scaling**: 1-10 replicas
+
+#### 9. Agent Backend (New in 1.16.0-rc1 - Experimental)
+- **Role**: Dify Agent execution backend
+- **Image**: langgenius/dify-agent-backend:1.16.0-rc1
+- **Scaling**: 1-5 replicas
+- **Port**: 5050
+- **Features**: Agent orchestration, skill execution, stub API
+- **⚠️ Warning**: Experimental. All agents share one sandbox. Only provide to trusted users.
+
+#### 10. Local Sandbox / Shellctl (New in 1.16.0-rc1 - Experimental)
+- **Role**: Linux sandbox for Dify Agent shell workspaces
+- **Image**: langgenius/dify-agent-local-sandbox:1.16.0-rc1
+- **Scaling**: 1-3 replicas
+- **Port**: 5004
+- **⚠️ Warning**: No built-in authentication — must run in trusted network only.
 - **Custom Domain**: agents.innoarchitects.ch (optional)
 
 ### Container Images (Dify 1.14.0)

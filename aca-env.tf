@@ -387,6 +387,12 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "false"
       }
 
+      # PyPI mirror auto-detection (new in 1.15.0)
+      env {
+        name  = "PIP_MIRROR_AUTO_DETECT"
+        value = "true"
+      }
+
       volume_mounts {
         name = "plugindaemon-storage"
         path = "/app/storage"
@@ -692,13 +698,25 @@ resource "azurerm_container_app" "worker" {
         value = var.dify-inner-api-key
       }
 
-      # Celery worker configuration (Dify 1.14.0 default raised to 4)
+      # Dify Agent backend (new in 1.16.0-rc1)
+      env {
+        name  = "AGENT_BACKEND_BASE_URL"
+        value = "http://agentbackend:5050"
+      }
+
+      # PubSub Redis for streaming workflow execution (new in 1.15.0)
+      env {
+        name  = "PUBSUB_REDIS_CHANNEL_TYPE"
+        value = "pubsub"
+      }
+
+      # Celery worker configuration (Dify 1.16.0 default raised to 4)
       env {
         name  = "CELERY_WORKER_AMOUNT"
         value = "4"
       }
 
-      # Redis key prefix (Dify 1.14.0)
+      # Redis key prefix (Dify 1.16.0)
       env {
         name  = "REDIS_KEY_PREFIX"
         value = ""
@@ -1123,7 +1141,7 @@ resource "azurerm_container_app" "api" {
         value = "4000"
       }
 
-      # Plugin daemon configuration - Updated for 1.14.0
+      # Plugin daemon configuration - Updated for 1.16.0
       env {
         name  = "PLUGIN_DAEMON_URL"
         value = "http://plugindaemon:5002"
@@ -1151,6 +1169,18 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "INNER_API_KEY_FOR_PLUGIN"
         value = var.dify-inner-api-key
+      }
+
+      # Dify Agent backend (new in 1.16.0-rc1)
+      env {
+        name  = "AGENT_BACKEND_BASE_URL"
+        value = "http://agentbackend:5050"
+      }
+
+      # PubSub Redis for streaming workflow execution (new in 1.15.0)
+      env {
+        name  = "PUBSUB_REDIS_CHANNEL_TYPE"
+        value = "pubsub"
       }
 
       # Marketplace configuration
@@ -1193,7 +1223,7 @@ resource "azurerm_container_app" "api" {
         value = "50"
       }
 
-      # Celery worker configuration (Dify 1.14.0 default)
+      # Celery worker configuration (Dify 1.16.0 default)
       env {
         name  = "CELERY_WORKER_AMOUNT"
         value = "4"
@@ -1203,13 +1233,13 @@ resource "azurerm_container_app" "api" {
         value = "gevent"
       }
 
-      # Collaboration mode (Dify 1.14.0 - disabled; requires WebSocket ingress setup to enable)
+      # Collaboration mode (Dify 1.16.0 - disabled; requires WebSocket ingress setup to enable)
       env {
         name  = "ENABLE_COLLABORATION_MODE"
         value = "false"
       }
 
-      # Markdown rendering and security (Dify 1.14.0)
+      # Markdown rendering and security (Dify 1.16.0)
       env {
         name  = "ALLOW_INLINE_STYLES"
         value = "false"
@@ -1219,7 +1249,7 @@ resource "azurerm_container_app" "api" {
         value = "false"
       }
 
-      # Redis key prefix (Dify 1.14.0 - empty disables prefixing)
+      # Redis key prefix (Dify 1.16.0 - empty disables prefixing)
       env {
         name  = "REDIS_KEY_PREFIX"
         value = ""
@@ -1260,6 +1290,144 @@ resource "azurerm_container_app" "api" {
   ingress {
     target_port      = 5001
     exposed_port     = 5001
+    external_enabled = false
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+    transport = "tcp"
+  }
+}
+
+################################################################################
+# Dify Agent Services (New in 1.16.0-rc1 - Experimental)
+################################################################################
+
+resource "azurerm_container_app" "local_sandbox" {
+  name                         = "localsandbox"
+  container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
+
+  template {
+    max_replicas = 3
+    min_replicas = 1
+    container {
+      name   = "langgenius"
+      image  = var.dify-agent-local-sandbox-image
+      cpu    = 0.5
+      memory = "1Gi"
+
+      env {
+        name  = "SHELLCTL_AUTH_TOKEN"
+        value = var.dify-agent-shellctl-auth-token
+      }
+    }
+  }
+
+  ingress {
+    target_port      = 5004
+    exposed_port     = 5004
+    external_enabled = false
+    traffic_weight {
+      percentage      = 100
+      latest_revision = true
+    }
+    transport = "tcp"
+  }
+}
+
+resource "azurerm_container_app" "agent_backend" {
+  name                         = "agentbackend"
+  container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
+  resource_group_name          = azurerm_resource_group.rg.name
+  revision_mode                = "Single"
+
+  depends_on = [
+    azurerm_container_app.local_sandbox,
+    azurerm_container_app.plugin_daemon
+  ]
+
+  template {
+    tcp_scale_rule {
+      name                = "agentbackend"
+      concurrent_requests = "10"
+    }
+    max_replicas = 5
+    min_replicas = 1
+    container {
+      name   = "langgenius"
+      image  = var.dify-agent-backend-image
+      cpu    = 0.5
+      memory = "1Gi"
+
+      # Redis configuration — Azure Redis SSL on port 6380
+      env {
+        name  = "DIFY_AGENT_REDIS_URL"
+        value = "rediss://:${azurerm_redis_cache.redis.primary_access_key}@${azurerm_redis_cache.redis.hostname}:6380/2"
+      }
+      env {
+        name  = "DIFY_AGENT_REDIS_PREFIX"
+        value = "dify-agent"
+      }
+
+      # Plugin daemon connection
+      env {
+        name  = "DIFY_AGENT_PLUGIN_DAEMON_URL"
+        value = "http://plugindaemon:5002"
+      }
+      env {
+        name  = "DIFY_AGENT_PLUGIN_DAEMON_API_KEY"
+        value = var.dify-plugin-daemon-key
+      }
+
+      # Dify inner API connection
+      env {
+        name  = "DIFY_AGENT_INNER_API_URL"
+        value = "http://api:5001"
+      }
+      env {
+        name  = "DIFY_AGENT_INNER_API_KEY"
+        value = var.dify-inner-api-key
+      }
+
+      # Shellctl (local sandbox) connection
+      env {
+        name  = "DIFY_AGENT_SHELLCTL_ENTRYPOINT"
+        value = "http://localsandbox:5004"
+      }
+      env {
+        name  = "DIFY_AGENT_SHELLCTL_AUTH_TOKEN"
+        value = var.dify-agent-shellctl-auth-token
+      }
+
+      # Agent stub API
+      env {
+        name  = "DIFY_AGENT_STUB_API_BASE_URL"
+        value = "http://agentbackend:5050/agent-stub"
+      }
+
+      # Security — JWE encryption key for bearer tokens
+      env {
+        name  = "DIFY_AGENT_SERVER_SECRET_KEY"
+        value = var.dify-agent-server-secret-key
+      }
+
+      # Lifecycle configuration
+      env {
+        name  = "DIFY_AGENT_SHUTDOWN_GRACE_SECONDS"
+        value = "30"
+      }
+      env {
+        name  = "DIFY_AGENT_RUN_RETENTION_SECONDS"
+        value = "259200"
+      }
+    }
+  }
+
+  ingress {
+    target_port      = 5050
+    exposed_port     = 5050
     external_enabled = false
     traffic_weight {
       percentage      = 100
@@ -1318,7 +1486,7 @@ resource "azurerm_container_app" "web" {
         value = "60000"
       }
 
-      # Security (Dify 1.14.0)
+      # Security (Dify 1.16.0)
       env {
         name  = "CSP_WHITELIST"
         value = ""
@@ -1384,7 +1552,7 @@ resource "azurerm_container_app" "web" {
         value = "50"
       }
 
-      # Web datasources (Dify 1.14.0)
+      # Web datasources (Dify 1.16.0)
       env {
         name  = "ENABLE_WEBSITE_JINAREADER"
         value = "true"

@@ -51,7 +51,7 @@ variable "storage-account-container" {
 ################################################################################
 
 variable "redis" {
-  type = string
+  type    = string
   default = "labdifyredis"
 }
 
@@ -95,13 +95,13 @@ variable "aca-loga" {
 }
 
 ################################################################################
-# Dify Container Images (Dify 1.14.0)
+# Dify Container Images (Dify 1.16.0-rc1)
 ################################################################################
 
 variable "dify-api-image" {
   description = "Dify API container image"
   type        = string
-  default     = "langgenius/dify-api:1.14.0"
+  default     = "langgenius/dify-api:1.16.0-rc1"
 }
 
 variable "dify-sandbox-image" {
@@ -113,13 +113,25 @@ variable "dify-sandbox-image" {
 variable "dify-web-image" {
   description = "Dify web frontend container image"
   type        = string
-  default     = "langgenius/dify-web:1.14.0"
+  default     = "langgenius/dify-web:1.16.0-rc1"
 }
 
 variable "dify-plugin-daemon-image" {
   description = "Dify plugin daemon container image"
   type        = string
-  default     = "langgenius/dify-plugin-daemon:0.6.0-local"
+  default     = "langgenius/dify-plugin-daemon:0.6.3-local"
+}
+
+variable "dify-agent-backend-image" {
+  description = "Dify Agent backend container image (experimental, new in 1.16.0)"
+  type        = string
+  default     = "langgenius/dify-agent-backend:1.16.0-rc1"
+}
+
+variable "dify-agent-local-sandbox-image" {
+  description = "Dify Agent local sandbox (shellctl) container image (experimental, new in 1.16.0)"
+  type        = string
+  default     = "langgenius/dify-agent-local-sandbox:1.16.0-rc1"
 }
 
 ################################################################################
@@ -156,5 +168,26 @@ variable "dify-sandbox-api-key" {
   type        = string
   sensitive   = true
   default     = "replace-me-dify-sandbox-api-secret-generate-with-openssl-rand-base64-42"
+}
+
+################################################################################
+# Dify Agent Configuration (New in 1.16.0-rc1 - Experimental)
+#
+# WARNING: The Dify Agent feature is experimental. All agents share one sandbox.
+# Only provide agent services to trusted, non-malicious users.
+################################################################################
+
+variable "dify-agent-server-secret-key" {
+  description = "JWE encryption key for Agent Stub bearer tokens. REPLACE before deploying. Generate with: python -c 'import secrets; print(secrets.token_urlsafe(32))'"
+  type        = string
+  sensitive   = true
+  default     = "replace-me-dify-agent-server-secret-key"
+}
+
+variable "dify-agent-shellctl-auth-token" {
+  description = "Auth token for shellctl communication. Can be empty for dev. Generate with: openssl rand -base64 32"
+  type        = string
+  sensitive   = true
+  default     = ""
 }
 
