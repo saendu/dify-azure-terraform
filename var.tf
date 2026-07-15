@@ -95,13 +95,13 @@ variable "aca-loga" {
 }
 
 ################################################################################
-# Dify Container Images (Dify 1.14.0)
+# Dify Container Images (Dify 1.15.0)
 ################################################################################
 
 variable "dify-api-image" {
   description = "Dify API container image"
   type        = string
-  default     = "langgenius/dify-api:1.14.0"
+  default     = "langgenius/dify-api:1.15.0"
 }
 
 variable "dify-sandbox-image" {
@@ -113,13 +113,13 @@ variable "dify-sandbox-image" {
 variable "dify-web-image" {
   description = "Dify web frontend container image"
   type        = string
-  default     = "langgenius/dify-web:1.14.0"
+  default     = "langgenius/dify-web:1.15.0"
 }
 
 variable "dify-plugin-daemon-image" {
   description = "Dify plugin daemon container image"
   type        = string
-  default     = "langgenius/dify-plugin-daemon:0.6.0-local"
+  default     = "langgenius/dify-plugin-daemon:0.6.3-local"
 }
 
 ################################################################################

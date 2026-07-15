@@ -63,7 +63,7 @@ EOF
 
 # Dify Azure Terraform
 
-Deploy [Dify](https://github.com/langgenius/dify) (v1.14.0) on Azure using Terraform.
+Deploy [Dify](https://github.com/langgenius/dify) (v1.15.0) on Azure using Terraform.
 
 ## Architecture
 
