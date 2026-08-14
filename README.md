@@ -121,56 +121,14 @@ terraform plan  -var-file="environments/prod.tfvars" -out="prod.tfplan"
 terraform apply "prod.tfplan"
 ```
 
-## Terraform state workflow (local + commit)
+## Terraform state security
 
-You asked for local state and committing it to Git at the end. This is possible.
-
-### Local state behavior
-
-- By default, this repo uses local state (`terraform.tfstate`) in the project folder.
-- Terraform will also maintain `terraform.tfstate.backup`.
-- The state file contains sensitive values (including generated secrets).
-
-### Important repo note
-
-Current `.gitignore` excludes `terraform.*`, which includes:
-
-- `terraform.tfstate`
-- `terraform.tfstate.backup`
-
-If you want to commit state, you have two options.
-
-Option 1 (recommended for explicit intent): force add state files only
-
-```bash
-git add -f terraform.tfstate terraform.tfstate.backup
-git add .terraform.lock.hcl
-git commit -m "Add Terraform local state snapshot"
-```
-
-Option 2: change `.gitignore` so state files are no longer ignored, then commit normally.
-
-### Suggested end-of-deployment commit sequence
-
-```bash
-# 1) Review infrastructure changes in state
-git status
-
-# 2) Add desired files
-git add -f terraform.tfstate terraform.tfstate.backup
-git add .terraform.lock.hcl
-git add *.tf README.md environments/*.example
-
-# 3) Commit
-git commit -m "Update Terraform deployment and local state"
-```
-
-### Security cautions (very important)
-
-- State contains secrets in plaintext-equivalent form.
-- Only do this in a private repository with strict access control.
-- Treat repo clones and CI logs as sensitive.
-- If state is committed by mistake to a public/shared repo, rotate all affected secrets immediately.
+- By default, this repo creates local `terraform.tfstate` and `terraform.tfstate.backup` files.
+- State contains sensitive values, including generated application, database, Redis, and storage credentials.
+- Keep state and environment `.tfvars` files ignored; never commit them to Git.
+- For shared environments, configure an encrypted, access-controlled remote backend such as the Terraform `azurerm` backend.
+- Restrict backend access to deployment identities and administrators, and enable the storage account's recovery and audit controls.
+- If state is committed or otherwise exposed, remove it from distribution and rotate every affected credential.
 
 ## Practical checks after code review
 
