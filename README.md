@@ -1,6 +1,6 @@
 # Dify on Azure with Terraform
 
-Deploy Dify 1.14.0 on Azure Container Apps with PostgreSQL Flexible Server, Azure Cache for Redis, and Azure Storage.
+Deploy Dify 1.15.0 on Azure Container Apps with PostgreSQL Flexible Server, Azure Cache for Redis, and Azure Storage.
 
 This README is focused on one thing: making environment configuration repeatable and easy.
 
@@ -56,7 +56,7 @@ az login
 
 ### 3. Create your environment variable file
 
-Copy the `environments/dev.tfvars.example` to your env name, e.g: `dev.tfvars`.
+Copy `environments/dev.tfvars copy.example` to your environment file, for example `environments/dev.tfvars`.
 
 
 ### 4. Plan for an environment

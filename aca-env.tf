@@ -387,6 +387,22 @@ resource "azurerm_container_app" "plugin_daemon" {
         value = "false"
       }
 
+      # UV cache directory (Dify 1.15.0 — path changed from /tmp/.uv-cache)
+      env {
+        name  = "UV_CACHE_DIR"
+        value = "/tmp/uv_cache"
+      }
+
+      # PyPI mirror configuration (Dify 1.15.0 — auto-detect nearby mirror)
+      env {
+        name  = "PIP_MIRROR_AUTO_DETECT"
+        value = "true"
+      }
+      env {
+        name  = "PIP_MIRROR_URL"
+        value = ""
+      }
+
       volume_mounts {
         name = "plugindaemon-storage"
         path = "/app/storage"
@@ -600,6 +616,24 @@ resource "azurerm_container_app" "worker" {
         value = "redis"
       }
 
+      # Event Bus / PubSub configuration (Dify 1.15.0 — streaming & HITL resume)
+      env {
+        name  = "EVENT_BUS_REDIS_URL"
+        value = ""
+      }
+      env {
+        name  = "EVENT_BUS_REDIS_CHANNEL_TYPE"
+        value = "pubsub"
+      }
+      env {
+        name  = "EVENT_BUS_REDIS_USE_CLUSTERS"
+        value = "false"
+      }
+      env {
+        name  = "PLUGIN_MODEL_PROVIDERS_CACHE_TTL"
+        value = "86400"
+      }
+
       # Storage configuration - Azure Blob
       env {
         name  = "STORAGE_TYPE"
@@ -811,6 +845,20 @@ resource "azurerm_container_app" "worker_beat" {
         value = "redis"
       }
 
+      # Event Bus / PubSub configuration (Dify 1.15.0)
+      env {
+        name  = "EVENT_BUS_REDIS_URL"
+        value = ""
+      }
+      env {
+        name  = "EVENT_BUS_REDIS_CHANNEL_TYPE"
+        value = "pubsub"
+      }
+      env {
+        name  = "EVENT_BUS_REDIS_USE_CLUSTERS"
+        value = "false"
+      }
+
       # Storage configuration - Azure Blob (beat may emit cleanup tasks that touch storage refs)
       env {
         name  = "STORAGE_TYPE"
@@ -1001,6 +1049,36 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "CELERY_BROKER_URL"
         value = "rediss://:${azurerm_key_vault_secret.redis_primary_key.value}@${azurerm_redis_cache.redis.hostname}:6380/1"
+      }
+
+      # Event Bus / PubSub configuration (Dify 1.15.0 — streaming & HITL resume)
+      env {
+        name  = "EVENT_BUS_REDIS_URL"
+        value = ""
+      }
+      env {
+        name  = "EVENT_BUS_REDIS_CHANNEL_TYPE"
+        value = "pubsub"
+      }
+      env {
+        name  = "EVENT_BUS_REDIS_USE_CLUSTERS"
+        value = "false"
+      }
+
+      # Server-side API URL (Dify 1.15.0 — used by web for SSR)
+      env {
+        name  = "SERVER_CONSOLE_API_URL"
+        value = "http://api:5001"
+      }
+
+      # Feature toggles (Dify 1.15.0)
+      env {
+        name  = "ENABLE_LEARN_APP"
+        value = "true"
+      }
+      env {
+        name  = "PLUGIN_MODEL_PROVIDERS_CACHE_TTL"
+        value = "86400"
       }
 
       # CORS configuration
@@ -1298,6 +1376,18 @@ resource "azurerm_container_app" "web" {
       env {
         name  = "APP_API_URL"
         value = ""
+      }
+
+      # Server-side API URL (Dify 1.15.0 — used for SSR requests)
+      env {
+        name  = "SERVER_CONSOLE_API_URL"
+        value = "http://api:5001"
+      }
+
+      # Feature preview (Dify 1.15.0)
+      env {
+        name  = "NEXT_PUBLIC_ENABLE_FEATURE_PREVIEW"
+        value = "false"
       }
 
       # Sentry configuration
