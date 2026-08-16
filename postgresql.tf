@@ -9,7 +9,7 @@ resource "azurerm_private_dns_zone" "postgres" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
-  name                  = azurerm_postgresql_flexible_server.postgres.name
+  name                  = local.postgres_server_name
   private_dns_zone_name = azurerm_private_dns_zone.postgres.name
   virtual_network_id    = azurerm_virtual_network.vnet.id
   resource_group_name   = azurerm_resource_group.rg.name
@@ -17,7 +17,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "postgres" {
 
 
 resource "azurerm_postgresql_flexible_server" "postgres" {
-  name                          = var.psql-flexible
+  name                          = local.postgres_server_name
   resource_group_name           = azurerm_resource_group.rg.name
   location                      = azurerm_resource_group.rg.location
   version                       = "16"
@@ -25,14 +25,15 @@ resource "azurerm_postgresql_flexible_server" "postgres" {
   private_dns_zone_id           = azurerm_private_dns_zone.postgres.id
   public_network_access_enabled = false
   administrator_login           = var.pgsql-user
-  administrator_password        = var.pgsql-password
+  administrator_password        = local.pgsql_admin_password_value
   zone                          = "1"
 
   storage_mb   = 32768
   storage_tier = "P4" # Recommendation P4 (120 IOPS), P6 (240 IOPS), or P10 (500 IOPS) should be enough
 
-  sku_name   = "B_Standard_B1ms"
-  # depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
+  sku_name = "B_Standard_B1ms"
+
+  depends_on = [azurerm_private_dns_zone_virtual_network_link.postgres]
 }
 
 resource "azurerm_postgresql_flexible_server_database" "difypgsqldb" {
@@ -51,9 +52,9 @@ resource "azurerm_postgresql_flexible_server_database" "pgvector" {
   charset   = "utf8"
 
   # prevent the possibility of accidental data loss
-#   lifecycle {
-#     prevent_destroy = true
-#   }
+  #   lifecycle {
+  #     prevent_destroy = true
+  #   }
 }
 
 resource "azurerm_postgresql_flexible_server_configuration" "extension" {

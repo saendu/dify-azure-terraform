@@ -1,0 +1,15 @@
+# Required
+subscription-id = "<SubscriptionID>"
+solution        = "dify"
+env             = "dev"
+region          = "westeurope"
+foundry-region  = "westeurope"
+
+# Optional overrides
+ip-prefix = "10.99"
+
+# Optional image pins
+dify-api-image           = "langgenius/dify-api:1.15.0"
+dify-sandbox-image       = "langgenius/dify-sandbox:0.2.15"
+dify-web-image           = "langgenius/dify-web:1.15.0"
+dify-plugin-daemon-image = "langgenius/dify-plugin-daemon:0.6.3-local"

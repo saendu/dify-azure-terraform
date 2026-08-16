@@ -5,13 +5,19 @@
 variable "subscription-id" {
   description = "Azure subscription ID"
   type        = string
-  default     = "<SubscriptionID>"
+  default     = "b41f99a1-c79c-41eb-8bdf-8a27f63ceae6"
 }
 
-variable "group-name" {
-  description = "Resource group name prefix"
+variable "solution" {
+  description = "Solution short name used in generated resource names"
   type        = string
-  default     = "dify-lab"
+  default     = "dify"
+}
+
+variable "env" {
+  description = "Environment short name used in generated resource names"
+  type        = string
+  default     = "dev"
 }
 
 ################################################################################
@@ -31,39 +37,8 @@ variable "ip-prefix" {
 }
 
 ################################################################################
-# Storage Configuration
-################################################################################
-
-variable "storage-account" {
-  description = "Storage account name for file shares and blob storage"
-  type        = string
-  default     = "labdifystorage"
-}
-
-variable "storage-account-container" {
-  description = "Blob container name for Dify files"
-  type        = string
-  default     = "dfy"
-}
-
-################################################################################
-# Redis Configuration
-################################################################################
-
-variable "redis" {
-  type = string
-  default = "labdifyredis"
-}
-
-################################################################################
 # PostgreSQL Configuration
 ################################################################################
-
-variable "psql-flexible" {
-  description = "PostgreSQL flexible server name"
-  type        = string
-  default     = "labdifypsql"
-}
 
 variable "pgsql-user" {
   description = "PostgreSQL administrator username"
@@ -71,37 +46,14 @@ variable "pgsql-user" {
   default     = "difyadmin"
 }
 
-variable "pgsql-password" {
-  description = "PostgreSQL administrator password (CHANGE THIS! See README.md)"
-  type        = string
-  sensitive   = true
-  # No default - must be provided at deployment time
-}
-
 ################################################################################
-# Azure Container Apps Configuration
-################################################################################
-
-variable "aca-env" {
-  description = "Container Apps environment name"
-  type        = string
-  default     = "dify-lab-env"
-}
-
-variable "aca-loga" {
-  description = "Log Analytics workspace name"
-  type        = string
-  default     = "dify-loga"
-}
-
-################################################################################
-# Dify Container Images (Dify 1.14.0)
+# Dify Container Images (Dify 1.15.0)
 ################################################################################
 
 variable "dify-api-image" {
   description = "Dify API container image"
   type        = string
-  default     = "langgenius/dify-api:1.14.0"
+  default     = "langgenius/dify-api:1.15.0"
 }
 
 variable "dify-sandbox-image" {
@@ -113,48 +65,30 @@ variable "dify-sandbox-image" {
 variable "dify-web-image" {
   description = "Dify web frontend container image"
   type        = string
-  default     = "langgenius/dify-web:1.14.0"
+  default     = "langgenius/dify-web:1.15.0"
 }
 
 variable "dify-plugin-daemon-image" {
   description = "Dify plugin daemon container image"
   type        = string
-  default     = "langgenius/dify-plugin-daemon:0.6.0-local"
+  default     = "langgenius/dify-plugin-daemon:0.6.3-local"
 }
+
+
 
 ################################################################################
-# Dify Security Configuration
-#
-# WARNING: The defaults below are obvious placeholders. They MUST be replaced
-# in `terraform.tfvars` (or via TF_VAR_* env vars) before any non-lab use.
-# Generate strong values with: openssl rand -base64 42
+# Azure AI Foundry (Cognitive Account + Project)
 ################################################################################
 
-variable "dify-secret-key" {
-  description = "Secret key for Dify API encryption. REPLACE before deploying. Generate with: openssl rand -base64 42"
+variable "foundry-region" {
+  description = "Azure region for Foundry resources (can differ from core region)"
   type        = string
-  sensitive   = true
-  default     = "replace-me-dify-secret-key-generate-with-openssl-rand-base64-42"
+  default     = "westeurope"
 }
 
-variable "dify-plugin-daemon-key" {
-  description = "Plugin daemon authentication key. REPLACE before deploying. Generate with: openssl rand -base64 42"
-  type        = string
-  sensitive   = true
-  default     = "replace-me-dify-plugin-daemon-secret-generate-with-openssl-rand-base64-42"
-}
-
-variable "dify-inner-api-key" {
-  description = "Internal API key for plugin <-> API communication. REPLACE before deploying. Generate with: openssl rand -base64 42"
-  type        = string
-  sensitive   = true
-  default     = "replace-me-dify-inner-api-secret-generate-with-openssl-rand-base64-42"
-}
-
-variable "dify-sandbox-api-key" {
-  description = "API key for sandbox code execution. REPLACE before deploying. Generate with: openssl rand -base64 42"
-  type        = string
-  sensitive   = true
-  default     = "replace-me-dify-sandbox-api-secret-generate-with-openssl-rand-base64-42"
+variable "enable_foundry_role_assignment" {
+  description = "Whether Terraform should create the Foundry Cognitive Services User role assignment for the keyvault reader identity. Requires roleAssignments/write permission."
+  type        = bool
+  default     = false
 }
 
