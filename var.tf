@@ -5,7 +5,7 @@
 variable "subscription-id" {
   description = "Azure subscription ID"
   type        = string
-  default     = "<SubscriptionID>"
+  default     = "b41f99a1-c79c-41eb-8bdf-8a27f63ceae6"
 }
 
 variable "solution" {

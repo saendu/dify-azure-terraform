@@ -5,3 +5,4 @@ terraform.*
 dify-docker/**
 terraform.tfvars
 environments/*.tfvars
+*.tfplan

@@ -1,3 +1,10 @@
+# Random suffix for globally unique resource names
+resource "random_string" "resource_suffix" {
+  length  = 5
+  special = false
+  upper   = false
+}
+
 # Core resource group
 resource "azurerm_resource_group" "rg" {
   name     = local.resource_group_name
@@ -11,17 +18,18 @@ locals {
 
   resource_group_name = "rg-${local.name_prefix}"
 
-  storage_account_name   = substr("${local.compact_prefix}stor01", 0, 24)
-  postgres_server_name   = substr("${local.compact_prefix}psql01", 0, 63)
+  suffix                 = random_string.resource_suffix.result
+  storage_account_name   = substr("${local.compact_prefix}stor${random_string.resource_suffix.result}", 0, 24)
+  postgres_server_name   = substr("${local.compact_prefix}psql-${random_string.resource_suffix.result}", 0, 63)
   redis_name             = "${local.name_prefix}-redis"
   aca_environment_name   = "${local.name_prefix}-aca-env"
   aca_log_analytics_name = "${local.name_prefix}-logs"
 
-  keyvault_name          = substr("${local.compact_prefix}kv01", 0, 24)
+  keyvault_name          = substr("${local.compact_prefix}kv-${random_string.resource_suffix.result}", 0, 24)
   keyvault_identity_name = "${local.name_prefix}-kv-reader-id"
 
-  foundry_account_name         = substr("${local.compact_prefix}foundry01", 0, 64)
-  foundry_custom_subdomain     = substr("${local.compact_prefix}foundry01", 0, 64)
+  foundry_account_name         = substr("${local.compact_prefix}foundry-${random_string.resource_suffix.result}", 0, 64)
+  foundry_custom_subdomain     = substr("${local.compact_prefix}foundry-${random_string.resource_suffix.result}", 0, 64)
   foundry_project_name         = "${local.name_prefix}-project"
   foundry_project_display_name = "${upper(var.solution)} ${upper(var.env)} Project"
 
