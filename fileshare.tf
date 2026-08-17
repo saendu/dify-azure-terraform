@@ -34,6 +34,13 @@ module "ssrf_proxy_fileshare" {
   share_name           = "ssrfproxy"
 }
 
+module "agent_ssrf_proxy_fileshare" {
+  source               = "./fileshare_module"
+  storage_account_name = azurerm_storage_account.acafileshare.name
+  local_mount_dir      = "mountfiles/agent-ssrfproxy"
+  share_name           = "agentssrfproxy"
+}
+
 module "plugin_daemon_fileshare" {
   source               = "./fileshare_module"
   storage_account_name = azurerm_storage_account.acafileshare.name
@@ -47,4 +54,3 @@ resource "azurerm_storage_share" "api_storage" {
   storage_account_name = azurerm_storage_account.acafileshare.name
   quota                = 50
 }
-

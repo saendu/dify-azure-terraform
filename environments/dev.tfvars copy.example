@@ -8,8 +8,14 @@ foundry-region  = "westeurope"
 # Optional overrides
 ip-prefix = "10.99"
 
+# Agent v2 is installed and enabled by default. Set false to select the classic
+# Agent experience while retaining the Agent v2 services.
+enable-dify-agent-v2 = true
+
 # Optional image pins
-dify-api-image           = "langgenius/dify-api:1.15.0"
+dify-api-image           = "langgenius/dify-api:1.16.1"
 dify-sandbox-image       = "langgenius/dify-sandbox:0.2.15"
-dify-web-image           = "langgenius/dify-web:1.15.0"
+dify-web-image           = "langgenius/dify-web:1.16.1"
 dify-plugin-daemon-image = "langgenius/dify-plugin-daemon:0.6.3-local"
+dify-agent-backend-image = "langgenius/dify-agent-backend:1.16.1"
+dify-agent-local-sandbox-image = "langgenius/dify-agent-local-sandbox:1.16.1"
