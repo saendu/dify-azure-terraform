@@ -70,6 +70,11 @@ enable-dify-agent-v2 = false
 
 ### 4. Plan for an environment
 
+#### 4a.
+```bash
+terraform init
+```
+#### 4b.
 ```bash
 terraform plan -var-file="environments/dev.tfvars" -out="dev.tfplan"
 ```
