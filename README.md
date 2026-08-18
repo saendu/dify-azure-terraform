@@ -319,3 +319,63 @@ Success criteria:
 - Secrets used by containers: update in Key Vault and roll out a new revision when required.
 
 This split keeps infra reproducible while allowing fast iteration in Dify.
+
+# Notes Sändu (deprecated)
+
+## Checklist
+- [ ] Update variables in `var.tf`
+- [ ] Set passwords in `terraform.tfvars` (see: Generate secure keys)
+- [ ] Clean state if needed:
+```bash
+  rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup *.tfplan
+```
+
+## Commands
+
+```bash
+# Login
+az login
+az login --use-device-code --tenant <name>.onmicrosoft.com 
+az account set --subscription <subscriptionID>
+
+# Register provider (first time only)
+az provider register --namespace Microsoft.App
+
+# Deploy
+terraform init
+terraform plan
+terraform apply
+```
+
+## Production Variables
+
+### Existing resource group
+terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resourceGroups/<groupName>
+
+⚠️ **Must change for production:**
+
+| Variable | Description |
+| --- | --- |
+| `subscription-id` | Your Azure subscription ID |
+| `pgsql-password` | PostgreSQL password (no default, required) |
+| `dify-secret-key` | API encryption key |
+| `dify-plugin-daemon-key` | Plugin daemon auth key |
+| `dify-inner-api-key` | Internal API key |
+| `dify-sandbox-api-key` | Sandbox execution key |
+
+#### Generate secure keys
+Generate secure keys and write them to `terraform.tfvars`:
+```bash
+cat <<EOF > terraform.tfvars
+pgsql-password         = "$(openssl rand -base64 24 | tr -d '/+=' | head -c 32)"
+dify-secret-key        = "$(openssl rand -base64 42)"
+dify-plugin-daemon-key = "$(openssl rand -base64 42)"
+dify-inner-api-key     = "$(openssl rand -base64 42)"
+dify-sandbox-api-key   = "$(openssl rand -base64 42)"
+EOF
+```
+
+**Should also review:**
+- `group-name` - Resource group name
+- `region` - Azure region
+- `storage-account`, `redis`, `psql-flexible` - Must be globally unique
