@@ -80,6 +80,30 @@ resource "azurerm_key_vault_secret" "dify_sandbox_api_key" {
   depends_on = [azurerm_key_vault_access_policy.deployer]
 }
 
+resource "azurerm_key_vault_secret" "dify_agent_api_token" {
+  name         = "dify-agent-api-token"
+  key_vault_id = azurerm_key_vault.dify.id
+  value        = local.dify_agent_api_token_value
+
+  depends_on = [azurerm_key_vault_access_policy.deployer]
+}
+
+resource "azurerm_key_vault_secret" "dify_agent_server_secret_key" {
+  name         = "dify-agent-server-secret-key"
+  key_vault_id = azurerm_key_vault.dify.id
+  value        = local.dify_agent_server_secret_key_value
+
+  depends_on = [azurerm_key_vault_access_policy.deployer]
+}
+
+resource "azurerm_key_vault_secret" "dify_agent_shellctl_auth_token" {
+  name         = "dify-agent-shellctl-auth-token"
+  key_vault_id = azurerm_key_vault.dify.id
+  value        = local.dify_agent_shellctl_auth_token_value
+
+  depends_on = [azurerm_key_vault_access_policy.deployer]
+}
+
 resource "azurerm_key_vault_secret" "postgres_password" {
   name         = "postgres-password"
   key_vault_id = azurerm_key_vault.dify.id

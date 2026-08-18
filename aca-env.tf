@@ -513,7 +513,10 @@ resource "azurerm_container_app" "worker" {
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
 
-  depends_on = [azurerm_container_app.nginx]
+  depends_on = [
+    azurerm_container_app.nginx,
+    azurerm_container_app.agent_backend,
+  ]
 
   template {
     tcp_scale_rule {
@@ -632,6 +635,32 @@ resource "azurerm_container_app" "worker" {
       env {
         name  = "PLUGIN_MODEL_PROVIDERS_CACHE_TTL"
         value = "86400"
+      }
+      env {
+        name  = "PLUGIN_MODEL_PROVIDERS_CACHE_ENABLED"
+        value = "true"
+      }
+
+      # Dify Agent v2 backend configuration (Dify 1.16.1)
+      env {
+        name  = "AGENT_BACKEND_BASE_URL"
+        value = "http://agentbackend:5050"
+      }
+      env {
+        name  = "AGENT_BACKEND_API_TOKEN"
+        value = azurerm_key_vault_secret.dify_agent_api_token.value
+      }
+      env {
+        name  = "AGENT_BACKEND_STREAM_READ_TIMEOUT_SECONDS"
+        value = "30"
+      }
+      env {
+        name  = "AGENT_BACKEND_STREAM_MAX_RECONNECTS"
+        value = "3"
+      }
+      env {
+        name  = "AGENT_BACKEND_RUN_TIMEOUT_SECONDS"
+        value = "1200"
       }
 
       # Storage configuration - Azure Blob
@@ -900,7 +929,10 @@ resource "azurerm_container_app" "api" {
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
 
-  depends_on = [azurerm_container_app.nginx]
+  depends_on = [
+    azurerm_container_app.nginx,
+    azurerm_container_app.agent_backend,
+  ]
 
   template {
     tcp_scale_rule {
@@ -1079,6 +1111,32 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "PLUGIN_MODEL_PROVIDERS_CACHE_TTL"
         value = "86400"
+      }
+      env {
+        name  = "PLUGIN_MODEL_PROVIDERS_CACHE_ENABLED"
+        value = "true"
+      }
+
+      # Dify Agent v2 backend configuration (Dify 1.16.1)
+      env {
+        name  = "AGENT_BACKEND_BASE_URL"
+        value = "http://agentbackend:5050"
+      }
+      env {
+        name  = "AGENT_BACKEND_API_TOKEN"
+        value = azurerm_key_vault_secret.dify_agent_api_token.value
+      }
+      env {
+        name  = "AGENT_BACKEND_STREAM_READ_TIMEOUT_SECONDS"
+        value = "30"
+      }
+      env {
+        name  = "AGENT_BACKEND_STREAM_MAX_RECONNECTS"
+        value = "3"
+      }
+      env {
+        name  = "AGENT_BACKEND_RUN_TIMEOUT_SECONDS"
+        value = "1200"
       }
 
       # CORS configuration
@@ -1384,10 +1442,14 @@ resource "azurerm_container_app" "web" {
         value = "http://api:5001"
       }
 
-      # Feature preview (Dify 1.15.0)
+      # Agent v2 and feature preview (Dify 1.16.1)
+      env {
+        name  = "NEXT_PUBLIC_ENABLE_AGENT_V2"
+        value = tostring(var.enable-dify-agent-v2)
+      }
       env {
         name  = "NEXT_PUBLIC_ENABLE_FEATURE_PREVIEW"
-        value = "false"
+        value = "true"
       }
 
       # Sentry configuration
@@ -1406,6 +1468,10 @@ resource "azurerm_container_app" "web" {
       env {
         name  = "TEXT_GENERATION_TIMEOUT_MS"
         value = "60000"
+      }
+      env {
+        name  = "WORKFLOW_GENERATION_TIMEOUT_MS"
+        value = "180000"
       }
 
       # Security (Dify 1.14.0)
