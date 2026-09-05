@@ -3,7 +3,7 @@
 ## Overview
 This project contains the Terraform configuration for deploying a Dify environment on Azure. Dify is an open-source LLM application development platform that provides a complete solution for building AI applications.
 
-**Current Version: Dify 1.16.1**
+**Current Version: Dify 1.17.0**
 
 ## Quick Start
 
@@ -50,6 +50,8 @@ This project contains the Terraform configuration for deploying a Dify environme
     - `agentssrfproxy` - Dedicated Agent v2 SSRF proxy configuration
     - `plugindaemon` - Plugin daemon storage
     - `api-storage` - API persistent storage
+    - `agent-home` - Agent v2 materialized homes and immutable Home Snapshots
+    - `agent-workspace` - Agent v2 mutable workspaces
 
 ### Azure Container Apps Environment
 - Name: dify-ina-latest-env
@@ -82,7 +84,7 @@ This project contains the Terraform configuration for deploying a Dify environme
 
 #### 4. Plugin Daemon (New in Dify 1.x)
 - **Role**: Plugin execution and management
-- **Image**: langgenius/dify-plugin-daemon:0.6.3-local
+- **Image**: langgenius/dify-plugin-daemon:0.6.10-local
 - **Scaling**: 1-10 replicas
 - **Critical Settings**:
   - `DB_SSL_MODE=require` (Required for Azure PostgreSQL)
@@ -92,41 +94,42 @@ This project contains the Terraform configuration for deploying a Dify environme
 
 #### 5. Worker
 - **Role**: Background job processing (Celery)
-- **Image**: langgenius/dify-api:1.16.1
+- **Image**: langgenius/dify-api:1.17.0
 - **Scaling**: 1-10 replicas
 - **Mode**: worker
 
 #### 6. Worker Beat (New in Dify 1.14.0)
 - **Role**: Celery scheduled task dispatcher
-- **Image**: langgenius/dify-api:1.16.1
+- **Image**: langgenius/dify-api:1.17.0
 - **Scaling**: Singleton (min=max=1) — beat MUST run as a single replica
 - **Mode**: beat
-- **Drives**: workflow log cleanup, sandbox expired-record cleanup, human-input timeout tasks
+- **Drives**: workflow log cleanup, sandbox expired-record cleanup, human-input timeout tasks, conversation cleanup recovery
 
 #### 7. API
 - **Role**: Main application API
-- **Image**: langgenius/dify-api:1.16.1
+- **Image**: langgenius/dify-api:1.17.0
 - **Scaling**: 1-10 replicas
 - **Mode**: api
-- **Features**: Migration enabled, marketplace integration
+- **Features**: Migration enabled, marketplace integration, workspace Skills
 
 #### 8. Web
 - **Role**: Frontend application
-- **Image**: langgenius/dify-web:1.16.1
+- **Image**: langgenius/dify-web:1.17.0
 - **Scaling**: 1-10 replicas
 - **Custom Domain**: agents.innoarchitects.ch (optional)
 
 #### 9. Agent Backend (Dify Agent v2)
 - **Role**: Runs Agent v2 orchestration and Agent Stub APIs
-- **Image**: langgenius/dify-agent-backend:1.16.1
+- **Image**: langgenius/dify-agent-backend:1.17.0
 - **Scaling**: Singleton
 - **Ingress**: Internal TCP 5050
 
 #### 10. Local Agent Sandbox
 - **Role**: Linux shell workspace for Agent v2
-- **Image**: langgenius/dify-agent-local-sandbox:1.16.1
+- **Image**: langgenius/dify-agent-local-sandbox:1.17.0
 - **Scaling**: Singleton
 - **Ingress**: Internal TCP 5004
+- **Persistence**: Azure Files mounted at `/home/dify` and `/workspace`
 
 #### 11. Agent SSRF Proxy
 - **Role**: Restricts the local Agent sandbox's supported HTTP(S) flows
@@ -134,13 +137,13 @@ This project contains the Terraform configuration for deploying a Dify environme
 - **Scaling**: Singleton
 - **Ingress**: Internal TCP 3128
 
-### Container Images (Dify 1.16.1)
-- API: langgenius/dify-api:1.16.1
-- Web: langgenius/dify-web:1.16.1
+### Container Images (Dify 1.17.0)
+- API: langgenius/dify-api:1.17.0
+- Web: langgenius/dify-web:1.17.0
 - Sandbox: langgenius/dify-sandbox:0.2.15
-- Plugin Daemon: langgenius/dify-plugin-daemon:0.6.3-local
-- Agent Backend: langgenius/dify-agent-backend:1.16.1
-- Agent Local Sandbox: langgenius/dify-agent-local-sandbox:1.16.1
+- Plugin Daemon: langgenius/dify-plugin-daemon:0.6.10-local
+- Agent Backend: langgenius/dify-agent-backend:1.17.0
+- Agent Local Sandbox: langgenius/dify-agent-local-sandbox:1.17.0
 
 ## Key Configuration Notes for Dify 1.x on Azure
 
@@ -250,7 +253,7 @@ The nginx configuration includes routing for:
 5. SSL required for PostgreSQL connections
 6. Plugin signature verification enabled
 7. Terraform state contains sensitive values and must remain outside Git
-8. Agent v2 bearer, JWE, and shell-control credentials are generated independently and stored in Key Vault
+8. Agent v2 bearer, JWE, and local-sandbox credentials are generated independently and stored in Key Vault
 9. Agent v2 is for trusted users; ACA does not provide Docker-equivalent per-service bridge-network isolation in one environment
 
 ## Dependencies
@@ -304,6 +307,48 @@ The nginx configuration includes routing for:
 1. Azure File Shares don't support symlinks - UV package manager needs copy mode
 2. Azure PostgreSQL requires SSL - DB_SSL_MODE must be set to "require"
 3. Service names must not contain underscores in Azure Container Apps
+
+## Upgrade Notes (1.16.1 → 1.17.0)
+
+### Image and runtime changes
+
+| Component | 1.16.1 | 1.17.0 |
+| --- | --- | --- |
+| dify-api | 1.16.1 | 1.17.0 |
+| dify-web | 1.16.1 | 1.17.0 |
+| Agent backend | 1.16.1 | 1.17.0 |
+| Agent local sandbox | 1.16.1 | 1.17.0 |
+| plugin daemon | 0.6.3-local | 0.6.10-local |
+| classic sandbox | 0.2.15 | 0.2.15 |
+
+Agent v2 now uses the explicit local runtime contract:
+
+- `DIFY_AGENT_RUNTIME_BACKEND=local`
+- `DIFY_AGENT_LOCAL_SANDBOX_ENDPOINT=http://localsandbox:5004`
+- `DIFY_AGENT_LOCAL_SANDBOX_AUTH_TOKEN` matching the sandbox's `SHELLCTL_AUTH_TOKEN`
+- `DIFY_AGENT_SANDBOX_FILES_BASE_URL=http://api:5001`
+
+The removed `DIFY_AGENT_SHELLCTL_ENTRYPOINT`, `DIFY_AGENT_SHELLCTL_AUTH_TOKEN`, and `AGENT_BACKEND_RUN_TIMEOUT_SECONDS` names are no longer injected. Agent v2 remains enabled by default and `enable-dify-agent-v2=false` still selects the classic experience without deleting the Agent v2 services.
+
+### Home Snapshots and workspace Skills
+
+Dify 1.17.0 persists the local sandbox home and workspace. The Terraform deployment adds independent read/write Azure Files mounts at `/home/dify` and `/workspace`, matching the upstream local sandbox paths. The mounts use the image's non-root UID/GID and Azure Files `mfsymlinks` support so Agent-installed packages remain writable and can contain symbolic links. `ENABLE_SKILL=true` enables workspace-level Skills, and the API/worker upload limits support Skill packages and files.
+
+### Timeouts
+
+The 1.17.0 one-hour defaults are applied consistently:
+
+- `APP_MAX_EXECUTION_TIME=3600`
+- `WORKFLOW_MAX_EXECUTION_TIME=3600`
+- `DIFY_AGENT_RUN_TIMEOUT_SECONDS=3600`
+
+The established plugin, file-access, token, database-pool, text-generation, and workflow-generation timeouts remain unchanged. API and worker also receive the new Home Snapshot and binding-file download client deadlines. The Agent backend uses the upstream outbound HTTP connection limits and timeouts.
+
+### Scheduled cleanup and migrations
+
+The singleton `workerbeat` enables conversation cleanup recovery every five minutes with a batch size of 100. `MIGRATION_ENABLED=true` applies the 1.17.0 schema migrations, including workflow versioning, workspace Skills, conversation cleanup indexing, and Agent Home Snapshot/runtime changes.
+
+For installations originating before 1.15.0, Dify also provides a separate idempotent legacy model-type migration. Back up PostgreSQL, run `flask data-migrate legacy-model-types` in dry-run mode, review the JSONL output, and only then rerun it with `--apply`. This command is not required for a new empty database.
 
 ## Upgrade Notes (1.15.0 → 1.16.1)
 

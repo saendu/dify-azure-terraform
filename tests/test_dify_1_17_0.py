@@ -67,12 +67,12 @@ def env_values(block: str) -> dict[str, str]:
 class DifyReleaseContractTests(unittest.TestCase):
     def test_release_images(self) -> None:
         expected = {
-            "dify-api-image": "langgenius/dify-api:1.16.1",
-            "dify-web-image": "langgenius/dify-web:1.16.1",
+            "dify-api-image": "langgenius/dify-api:1.17.0",
+            "dify-web-image": "langgenius/dify-web:1.17.0",
             "dify-sandbox-image": "langgenius/dify-sandbox:0.2.15",
-            "dify-plugin-daemon-image": "langgenius/dify-plugin-daemon:0.6.3-local",
-            "dify-agent-backend-image": "langgenius/dify-agent-backend:1.16.1",
-            "dify-agent-local-sandbox-image": "langgenius/dify-agent-local-sandbox:1.16.1",
+            "dify-plugin-daemon-image": "langgenius/dify-plugin-daemon:0.6.10-local",
+            "dify-agent-backend-image": "langgenius/dify-agent-backend:1.17.0",
+            "dify-agent-local-sandbox-image": "langgenius/dify-agent-local-sandbox:1.17.0",
         }
         for name, image in expected.items():
             with self.subTest(variable=name):
@@ -83,7 +83,7 @@ class DifyReleaseContractTests(unittest.TestCase):
         web = resource_block("aca-env.tf", "azurerm_container_app", "web")
         env = env_values(web)
         self.assertEqual(env["NEXT_PUBLIC_ENABLE_AGENT_V2"], "tostring(var.enable-dify-agent-v2)")
-        self.assertEqual(env["NEXT_PUBLIC_ENABLE_FEATURE_PREVIEW"], '"true"')
+        self.assertNotIn("NEXT_PUBLIC_ENABLE_FEATURE_PREVIEW", env)
 
     def test_existing_timeouts_are_preserved(self) -> None:
         expected = {
@@ -93,7 +93,9 @@ class DifyReleaseContractTests(unittest.TestCase):
             "FILES_ACCESS_TIMEOUT": '"300"',
             "PLUGIN_DAEMON_TIMEOUT": '"600.0"',
             "TEXT_GENERATION_TIMEOUT_MS": '"60000"',
-            "WORKFLOW_MAX_EXECUTION_TIME": '"1200"',
+            "WORKFLOW_GENERATION_TIMEOUT_MS": '"180000"',
+            "APP_MAX_EXECUTION_TIME": '"3600"',
+            "WORKFLOW_MAX_EXECUTION_TIME": '"3600"',
             "ACCESS_TOKEN_EXPIRE_MINUTES": '"60"',
             "REFRESH_TOKEN_EXPIRE_DAYS": '"30"',
             "SQLALCHEMY_POOL_RECYCLE": '"3600"',
@@ -178,6 +180,36 @@ class DifyReleaseContractTests(unittest.TestCase):
         self.assertEqual(sandbox_env["HTTP_PROXY"], '"http://agentssrfproxy:3128"')
         self.assertEqual(sandbox_env["HTTPS_PROXY"], '"http://agentssrfproxy:3128"')
         self.assertEqual(sandbox_env["SHELLCTL_ENABLE_PATH_ISOLATION"], '"true"')
+        self.assertIn('path = "/home/dify"', sandbox)
+        self.assertIn('path = "/workspace"', sandbox)
+
+    def test_agent_local_sandbox_storage_is_persistent(self) -> None:
+        fileshare = read("fileshare.tf")
+        agent = read("agent.tf")
+        sandbox = resource_block("agent.tf", "azurerm_container_app", "local_sandbox")
+
+        for name, share_name, mount_path in (
+            ("dify_agent_local_sandbox_home", "agent-home", "/home/dify"),
+            ("dify_agent_local_sandbox_workspace", "agent-workspace", "/workspace"),
+        ):
+            with self.subTest(storage=name):
+                share = resource_block("fileshare.tf", "azurerm_storage_share", name)
+                self.assertRegex(share, rf'name\s*=\s*"{re.escape(share_name)}"')
+                environment_storage = resource_block(
+                    "agent.tf", "azurerm_container_app_environment_storage", name
+                )
+                self.assertIn(f"azurerm_storage_share.{name}.name", environment_storage)
+                self.assertRegex(
+                    sandbox,
+                    rf"storage_name\s*=\s*azurerm_container_app_environment_storage\.{name}\.name",
+                )
+                self.assertIn(f'path = "{mount_path}"', sandbox)
+                self.assertIn(
+                    'mount_options = "uid=1000,gid=1000,dir_mode=0770,file_mode=0660,mfsymlinks"',
+                    sandbox,
+                )
+
+        self.assertIn('access_mode                  = "ReadWrite"', agent)
 
     def test_agent_authentication_wiring(self) -> None:
         api_env = env_values(resource_block("aca-env.tf", "azurerm_container_app", "api"))
@@ -192,7 +224,9 @@ class DifyReleaseContractTests(unittest.TestCase):
                 self.assertEqual(env["AGENT_BACKEND_API_TOKEN"], shared_api_token)
                 self.assertEqual(env["AGENT_BACKEND_STREAM_READ_TIMEOUT_SECONDS"], '"30"')
                 self.assertEqual(env["AGENT_BACKEND_STREAM_MAX_RECONNECTS"], '"3"')
-                self.assertEqual(env["AGENT_BACKEND_RUN_TIMEOUT_SECONDS"], '"1200"')
+                self.assertEqual(env["AGENT_BACKEND_HOME_SNAPSHOT_TIMEOUT_SECONDS"], '"45"')
+                self.assertEqual(env["AGENT_BACKEND_BINDING_FILE_DOWNLOAD_TIMEOUT_SECONDS"], '"240"')
+                self.assertNotIn("AGENT_BACKEND_RUN_TIMEOUT_SECONDS", env)
 
         self.assertEqual(backend_env["DIFY_AGENT_API_TOKEN"], shared_api_token)
         self.assertEqual(
@@ -200,8 +234,49 @@ class DifyReleaseContractTests(unittest.TestCase):
             "azurerm_key_vault_secret.dify_agent_server_secret_key.value",
         )
         shell_token = "azurerm_key_vault_secret.dify_agent_shellctl_auth_token.value"
-        self.assertEqual(backend_env["DIFY_AGENT_SHELLCTL_AUTH_TOKEN"], shell_token)
+        self.assertEqual(backend_env["DIFY_AGENT_RUNTIME_BACKEND"], '"local"')
+        self.assertEqual(backend_env["DIFY_AGENT_LOCAL_SANDBOX_ENDPOINT"], '"http://localsandbox:5004"')
+        self.assertEqual(backend_env["DIFY_AGENT_LOCAL_SANDBOX_AUTH_TOKEN"], shell_token)
+        self.assertEqual(backend_env["DIFY_AGENT_SANDBOX_FILES_BASE_URL"], '"http://api:5001"')
+        self.assertEqual(backend_env["DIFY_AGENT_RUN_TIMEOUT_SECONDS"], '"3600"')
+        self.assertEqual(
+            backend_env["DIFY_AGENT_BINDING_FILE_DOWNLOAD_COMMAND_TIMEOUT_SECONDS"], '"210"'
+        )
+        self.assertEqual(backend_env["DIFY_AGENT_STUB_UPLOAD_FILE_SIZE_LIMIT"], '"50"')
+        self.assertNotIn("DIFY_AGENT_SHELLCTL_ENTRYPOINT", backend_env)
+        self.assertNotIn("DIFY_AGENT_SHELLCTL_AUTH_TOKEN", backend_env)
         self.assertEqual(sandbox_env["SHELLCTL_AUTH_TOKEN"], shell_token)
+
+    def test_agent_outbound_http_defaults(self) -> None:
+        backend_env = env_values(resource_block("agent.tf", "azurerm_container_app", "agent_backend"))
+        expected = {
+            "DIFY_AGENT_OUTBOUND_HTTP_CONNECT_TIMEOUT": '"10"',
+            "DIFY_AGENT_OUTBOUND_HTTP_READ_TIMEOUT": '"600"',
+            "DIFY_AGENT_OUTBOUND_HTTP_WRITE_TIMEOUT": '"30"',
+            "DIFY_AGENT_OUTBOUND_HTTP_POOL_TIMEOUT": '"10"',
+            "DIFY_AGENT_OUTBOUND_HTTP_MAX_CONNECTIONS": '"100"',
+            "DIFY_AGENT_OUTBOUND_HTTP_MAX_KEEPALIVE_CONNECTIONS": '"20"',
+            "DIFY_AGENT_OUTBOUND_HTTP_KEEPALIVE_EXPIRY": '"30"',
+        }
+        for name, value in expected.items():
+            with self.subTest(variable=name):
+                self.assertEqual(backend_env.get(name), value)
+
+    def test_release_features_are_enabled_for_community_installation(self) -> None:
+        api_env = env_values(resource_block("aca-env.tf", "azurerm_container_app", "api"))
+        worker_env = env_values(resource_block("aca-env.tf", "azurerm_container_app", "worker"))
+        beat_env = env_values(resource_block("aca-env.tf", "azurerm_container_app", "worker_beat"))
+
+        for name, env in (("api", api_env), ("worker", worker_env)):
+            with self.subTest(service=name):
+                self.assertEqual(env["DEPLOYMENT_EDITION"], '"COMMUNITY"')
+                self.assertEqual(env["ENABLE_SKILL"], '"true"')
+                self.assertEqual(env["UPLOAD_SKILL_FILE_SIZE_LIMIT"], '"50"')
+                self.assertEqual(env["PLUGIN_MAX_FILE_SIZE"], '"52428800"')
+
+        self.assertEqual(beat_env["ENABLE_CONVERSATION_CLEANUP_TASK"], '"true"')
+        self.assertEqual(beat_env["CONVERSATION_CLEANUP_TASK_INTERVAL"], '"5"')
+        self.assertEqual(beat_env["CONVERSATION_CLEANUP_BATCH_SIZE"], '"100"')
 
     def test_required_data_services(self) -> None:
         postgres = read("postgresql.tf")
@@ -213,6 +288,16 @@ class DifyReleaseContractTests(unittest.TestCase):
         )
         self.assertIn('value     = "vector,uuid-ossp"', extension)
         self.assertIn('resource "azurerm_redis_cache" "redis"', read("redis-cache.tf"))
+
+    def test_storage_resources_use_non_deprecated_account_ids(self) -> None:
+        fileshare = read("fileshare.tf")
+        module = read("fileshare_module/share.tf")
+        module_variables = read("fileshare_module/variables.tf")
+
+        self.assertNotRegex(fileshare, r"\bstorage_account_name\s*=")
+        self.assertNotRegex(module, r"\bstorage_account_name\s*=")
+        self.assertIn("storage_account_id = var.storage_account_id", module)
+        self.assertIn('variable "storage_account_id"', module_variables)
 
 
 if __name__ == "__main__":

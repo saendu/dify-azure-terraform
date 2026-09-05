@@ -1,7 +1,7 @@
 resource "azurerm_storage_share" "fileshare" {
-  name                 = var.share_name
-  storage_account_name = var.storage_account_name
-  quota                = var.quota
+  name               = var.share_name
+  storage_account_id = var.storage_account_id
+  quota              = var.quota
 }
 
 data "local_file" "files" {

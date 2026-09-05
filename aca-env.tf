@@ -552,6 +552,18 @@ resource "azurerm_container_app" "worker" {
         name  = "DEPLOY_ENV"
         value = "PRODUCTION"
       }
+      env {
+        name  = "DEPLOYMENT_EDITION"
+        value = "COMMUNITY"
+      }
+      env {
+        name  = "APP_MAX_EXECUTION_TIME"
+        value = "3600"
+      }
+      env {
+        name  = "WORKFLOW_MAX_EXECUTION_TIME"
+        value = "3600"
+      }
 
       # INTERNAL_FILES_URL is used for plugin daemon communication within Docker network
       env {
@@ -640,8 +652,20 @@ resource "azurerm_container_app" "worker" {
         name  = "PLUGIN_MODEL_PROVIDERS_CACHE_ENABLED"
         value = "true"
       }
+      env {
+        name  = "ENABLE_SKILL"
+        value = "true"
+      }
+      env {
+        name  = "UPLOAD_SKILL_FILE_SIZE_LIMIT"
+        value = "50"
+      }
+      env {
+        name  = "PLUGIN_MAX_FILE_SIZE"
+        value = "52428800"
+      }
 
-      # Dify Agent v2 backend configuration (Dify 1.16.1)
+      # Dify Agent v2 backend configuration (Dify 1.17.0)
       env {
         name  = "AGENT_BACKEND_BASE_URL"
         value = "http://agentbackend:5050"
@@ -659,8 +683,12 @@ resource "azurerm_container_app" "worker" {
         value = "3"
       }
       env {
-        name  = "AGENT_BACKEND_RUN_TIMEOUT_SECONDS"
-        value = "1200"
+        name  = "AGENT_BACKEND_HOME_SNAPSHOT_TIMEOUT_SECONDS"
+        value = "45"
+      }
+      env {
+        name  = "AGENT_BACKEND_BINDING_FILE_DOWNLOAD_TIMEOUT_SECONDS"
+        value = "240"
       }
 
       # Storage configuration - Azure Blob
@@ -809,6 +837,10 @@ resource "azurerm_container_app" "worker_beat" {
         name  = "DEPLOY_ENV"
         value = "PRODUCTION"
       }
+      env {
+        name  = "DEPLOYMENT_EDITION"
+        value = "COMMUNITY"
+      }
 
       # Database configuration
       env {
@@ -919,6 +951,18 @@ resource "azurerm_container_app" "worker_beat" {
         name  = "WORKFLOW_LOG_CLEANUP_ENABLED"
         value = "false"
       }
+      env {
+        name  = "ENABLE_CONVERSATION_CLEANUP_TASK"
+        value = "true"
+      }
+      env {
+        name  = "CONVERSATION_CLEANUP_TASK_INTERVAL"
+        value = "5"
+      }
+      env {
+        name  = "CONVERSATION_CLEANUP_BATCH_SIZE"
+        value = "100"
+      }
     }
   }
 }
@@ -976,6 +1020,14 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "DEPLOY_ENV"
         value = "PRODUCTION"
+      }
+      env {
+        name  = "DEPLOYMENT_EDITION"
+        value = "COMMUNITY"
+      }
+      env {
+        name  = "APP_MAX_EXECUTION_TIME"
+        value = "3600"
       }
 
       # URL configuration - will be set dynamically based on nginx
@@ -1116,8 +1168,20 @@ resource "azurerm_container_app" "api" {
         name  = "PLUGIN_MODEL_PROVIDERS_CACHE_ENABLED"
         value = "true"
       }
+      env {
+        name  = "ENABLE_SKILL"
+        value = "true"
+      }
+      env {
+        name  = "UPLOAD_SKILL_FILE_SIZE_LIMIT"
+        value = "50"
+      }
+      env {
+        name  = "PLUGIN_MAX_FILE_SIZE"
+        value = "52428800"
+      }
 
-      # Dify Agent v2 backend configuration (Dify 1.16.1)
+      # Dify Agent v2 backend configuration (Dify 1.17.0)
       env {
         name  = "AGENT_BACKEND_BASE_URL"
         value = "http://agentbackend:5050"
@@ -1135,8 +1199,12 @@ resource "azurerm_container_app" "api" {
         value = "3"
       }
       env {
-        name  = "AGENT_BACKEND_RUN_TIMEOUT_SECONDS"
-        value = "1200"
+        name  = "AGENT_BACKEND_HOME_SNAPSHOT_TIMEOUT_SECONDS"
+        value = "45"
+      }
+      env {
+        name  = "AGENT_BACKEND_BINDING_FILE_DOWNLOAD_TIMEOUT_SECONDS"
+        value = "240"
       }
 
       # CORS configuration
@@ -1306,7 +1374,7 @@ resource "azurerm_container_app" "api" {
       }
       env {
         name  = "WORKFLOW_MAX_EXECUTION_TIME"
-        value = "1200"
+        value = "3600"
       }
       env {
         name  = "LOOP_NODE_MAX_COUNT"
@@ -1442,14 +1510,10 @@ resource "azurerm_container_app" "web" {
         value = "http://api:5001"
       }
 
-      # Agent v2 and feature preview (Dify 1.16.1)
+      # Agent v2 (Dify 1.17.0); classic Agent remains available when disabled.
       env {
         name  = "NEXT_PUBLIC_ENABLE_AGENT_V2"
         value = tostring(var.enable-dify-agent-v2)
-      }
-      env {
-        name  = "NEXT_PUBLIC_ENABLE_FEATURE_PREVIEW"
-        value = "true"
       }
 
       # Sentry configuration
