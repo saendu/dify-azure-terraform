@@ -24,6 +24,7 @@ locals {
   redis_name             = "${local.name_prefix}-redis"
   aca_environment_name   = "${local.name_prefix}-aca-env"
   aca_log_analytics_name = "${local.name_prefix}-logs"
+  dify_public_url         = "https://nginx.${azurerm_container_app_environment.dify-aca-env.default_domain}"
 
   keyvault_name          = substr("${local.compact_prefix}kv-${random_string.resource_suffix.result}", 0, 24)
   keyvault_identity_name = "${local.name_prefix}-kv-reader-id"
@@ -38,4 +39,4 @@ locals {
     Project     = upper(var.solution)
     ManagedBy   = "Terraform"
   }
-} 
+}

@@ -130,11 +130,22 @@ class DifyReleaseContractTests(unittest.TestCase):
 
     def test_nginx_release_routes(self) -> None:
         nginx = read("mountfiles/nginx/conf.d/default.conf")
+        proxy = read("mountfiles/nginx/proxy.conf")
+        container_app = resource_block("aca-env.tf", "azurerm_container_app", "nginx")
         for route in ("/openapi", "/socket.io/", "/e/", "/mcp", "/triggers"):
             with self.subTest(route=route):
                 self.assertRegex(nginx, rf"location\s+{re.escape(route)}")
         self.assertIn("proxy_set_header Upgrade $http_upgrade;", nginx)
         self.assertIn("proxy_pass http://plugindaemon:5002;", nginx)
+        self.assertIn("proxy_set_header X-Forwarded-Proto https;", proxy)
+        self.assertNotIn("proxy_set_header X-Forwarded-Proto $scheme;", proxy)
+        self.assertIn(
+            "proxy_set_header Dify-Hook-Url https://$host$request_uri;",
+            nginx,
+        )
+        self.assertRegex(container_app, r'name\s*=\s*"DIFY_NGINX_CONFIG_HASH"')
+        self.assertIn('fileset("${path.module}/mountfiles/nginx", "**/*")', container_app)
+        self.assertIn("filesha256", container_app)
 
     def test_main_ssrf_blocks_private_networks(self) -> None:
         common = read("mountfiles/ssrfproxy/dify_common.conf")
@@ -205,7 +216,7 @@ class DifyReleaseContractTests(unittest.TestCase):
                 )
                 self.assertIn(f'path = "{mount_path}"', sandbox)
                 self.assertIn(
-                    'mount_options = "uid=1000,gid=1000,dir_mode=0770,file_mode=0660,mfsymlinks"',
+                    'mount_options = "uid=1000,gid=1000,dir_mode=0770,file_mode=0660,mfsymlinks,nobrl"',
                     sandbox,
                 )
 
@@ -307,6 +318,62 @@ class DifyReleaseContractTests(unittest.TestCase):
             module.count("storage_share_url = azurerm_storage_share.fileshare.url"),
             3,
         )
+
+    def test_fileshare_uploads_track_source_content(self) -> None:
+        module = read("fileshare_module/share.tf")
+
+        self.assertEqual(
+            len(
+                re.findall(
+                    r"^\s*content_md5\s*=\s*filemd5\(each\.value\.filename\)\s*$",
+                    module,
+                    re.MULTILINE,
+                )
+            ),
+            2,
+        )
+
+    def test_container_apps_pin_the_consumption_workload_profile(self) -> None:
+        resources = {
+            "aca-env.tf": (
+                "nginx",
+                "ssrfproxy",
+                "plugin_daemon",
+                "sandbox",
+                "worker",
+                "worker_beat",
+                "api",
+                "web",
+            ),
+            "agent.tf": ("agent_ssrf_proxy", "local_sandbox", "agent_backend"),
+        }
+
+        for filename, names in resources.items():
+            for name in names:
+                with self.subTest(container_app=name):
+                    block = resource_block(filename, "azurerm_container_app", name)
+                    self.assertRegex(
+                        block,
+                        r'workload_profile_name\s*=\s*"Consumption"',
+                    )
+
+    def test_dify_url_uses_the_stable_app_ingress(self) -> None:
+        container_apps = read("aca-env.tf")
+        main = read("main.tf")
+
+        self.assertRegex(
+            main,
+            r'dify_public_url\s*=\s*"https://nginx\.\$\{azurerm_container_app_environment\.dify-aca-env\.default_domain\}"',
+        )
+        self.assertIn(
+            "value       = local.dify_public_url",
+            container_apps,
+        )
+        self.assertNotIn(
+            'value       = "https://${azurerm_container_app.nginx.latest_revision_fqdn}"',
+            container_apps,
+        )
+        self.assertGreaterEqual(container_apps.count("value = local.dify_public_url"), 7)
 
 
 if __name__ == "__main__":

@@ -56,6 +56,7 @@ resource "azurerm_storage_share_file" "root_files" {
   name              = basename(each.value.filename)
   storage_share_url = azurerm_storage_share.fileshare.url
   source            = each.value.filename
+  content_md5       = filemd5(each.value.filename)
   depends_on        = [azurerm_storage_share_directory.directories]
 }
 
@@ -65,6 +66,7 @@ resource "azurerm_storage_share_file" "subdir_files" {
   name              = basename(each.value.filename)
   storage_share_url = azurerm_storage_share.fileshare.url
   source            = each.value.filename
+  content_md5       = filemd5(each.value.filename)
   path              = local.relative_dir_by_file[each.value.filename]
   depends_on        = [azurerm_storage_share_directory.directories]
 }

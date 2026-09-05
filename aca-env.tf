@@ -39,6 +39,7 @@ resource "azurerm_container_app" "nginx" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   template {
     http_scale_rule {
@@ -52,6 +53,13 @@ resource "azurerm_container_app" "nginx" {
       image  = "nginx:latest"
       cpu    = 0.25
       memory = "0.5Gi"
+      env {
+        name  = "DIFY_NGINX_CONFIG_HASH"
+        value = sha256(join("", [
+          for file in sort(tolist(fileset("${path.module}/mountfiles/nginx", "**/*"))) :
+          filesha256("${path.module}/mountfiles/nginx/${file}")
+        ]))
+      }
       volume_mounts {
         name = "nginxconf"
         path = "/etc/nginx"
@@ -89,6 +97,7 @@ resource "azurerm_container_app" "ssrfproxy" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   template {
     tcp_scale_rule {
@@ -147,6 +156,7 @@ resource "azurerm_container_app" "plugin_daemon" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   template {
     tcp_scale_rule {
@@ -443,6 +453,7 @@ resource "azurerm_container_app" "sandbox" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   template {
     tcp_scale_rule {
@@ -512,6 +523,7 @@ resource "azurerm_container_app" "worker" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   depends_on = [
     azurerm_container_app.nginx,
@@ -803,6 +815,7 @@ resource "azurerm_container_app" "worker_beat" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   depends_on = [azurerm_container_app.nginx]
 
@@ -972,6 +985,7 @@ resource "azurerm_container_app" "api" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   depends_on = [
     azurerm_container_app.nginx,
@@ -1033,23 +1047,27 @@ resource "azurerm_container_app" "api" {
       # URL configuration - will be set dynamically based on nginx
       env {
         name  = "CONSOLE_WEB_URL"
-        value = ""
+        value = local.dify_public_url
       }
       env {
         name  = "CONSOLE_API_URL"
-        value = ""
+        value = local.dify_public_url
       }
       env {
         name  = "SERVICE_API_URL"
-        value = ""
+        value = local.dify_public_url
       }
       env {
         name  = "APP_WEB_URL"
-        value = ""
+        value = local.dify_public_url
       }
       env {
         name  = "FILES_URL"
-        value = ""
+        value = local.dify_public_url
+      }
+      env {
+        name  = "ENDPOINT_URL_TEMPLATE"
+        value = "${local.dify_public_url}/e/{hook_id}"
       }
       # INTERNAL_FILES_URL is used for plugin daemon communication within Docker network
       # Required for proper plugin file access
@@ -1478,6 +1496,7 @@ resource "azurerm_container_app" "web" {
   container_app_environment_id = azurerm_container_app_environment.dify-aca-env.id
   resource_group_name          = azurerm_resource_group.rg.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   depends_on = [azurerm_container_app.nginx]
 
@@ -1497,11 +1516,11 @@ resource "azurerm_container_app" "web" {
       # API URL configuration - will be proxied through nginx
       env {
         name  = "CONSOLE_API_URL"
-        value = ""
+        value = local.dify_public_url
       }
       env {
         name  = "APP_API_URL"
-        value = ""
+        value = local.dify_public_url
       }
 
       # Server-side API URL (Dify 1.15.0 — used for SSR requests)
@@ -1634,6 +1653,6 @@ resource "azurerm_container_app" "web" {
 
 # Output the Dify application URL
 output "dify_app_url" {
-  value       = "https://${azurerm_container_app.nginx.latest_revision_fqdn}"
+  value       = local.dify_public_url
   description = "The URL of the Dify application"
 }
