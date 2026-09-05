@@ -299,6 +299,15 @@ class DifyReleaseContractTests(unittest.TestCase):
         self.assertIn("storage_account_id = var.storage_account_id", module)
         self.assertIn('variable "storage_account_id"', module_variables)
 
+    def test_fileshare_children_use_the_share_data_plane_url(self) -> None:
+        module = read("fileshare_module/share.tf")
+
+        self.assertNotRegex(module, r"\bstorage_share_id\s*=")
+        self.assertEqual(
+            module.count("storage_share_url = azurerm_storage_share.fileshare.url"),
+            3,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

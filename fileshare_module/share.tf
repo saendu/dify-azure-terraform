@@ -45,28 +45,28 @@ locals {
 }
 
 resource "azurerm_storage_share_directory" "directories" {
-  for_each         = toset(local.directories)
-  name             = each.value
-  storage_share_id = azurerm_storage_share.fileshare.id
+  for_each          = toset(local.directories)
+  name              = each.value
+  storage_share_url = azurerm_storage_share.fileshare.url
 }
 
 resource "azurerm_storage_share_file" "root_files" {
   for_each = local.root_files
 
-  name             = basename(each.value.filename)
-  storage_share_id = azurerm_storage_share.fileshare.id
-  source           = each.value.filename
-  depends_on       = [azurerm_storage_share_directory.directories]
+  name              = basename(each.value.filename)
+  storage_share_url = azurerm_storage_share.fileshare.url
+  source            = each.value.filename
+  depends_on        = [azurerm_storage_share_directory.directories]
 }
 
 resource "azurerm_storage_share_file" "subdir_files" {
   for_each = local.subdir_files
 
-  name             = basename(each.value.filename)
-  storage_share_id = azurerm_storage_share.fileshare.id
-  source           = each.value.filename
-  path             = local.relative_dir_by_file[each.value.filename]
-  depends_on       = [azurerm_storage_share_directory.directories]
+  name              = basename(each.value.filename)
+  storage_share_url = azurerm_storage_share.fileshare.url
+  source            = each.value.filename
+  path              = local.relative_dir_by_file[each.value.filename]
+  depends_on        = [azurerm_storage_share_directory.directories]
 }
 
 
