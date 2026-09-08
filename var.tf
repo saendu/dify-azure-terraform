@@ -47,13 +47,13 @@ variable "pgsql-user" {
 }
 
 ################################################################################
-# Dify Container Images (Dify 1.16.1)
+# Dify Container Images (Dify 1.17.0)
 ################################################################################
 
 variable "dify-api-image" {
   description = "Dify API container image"
   type        = string
-  default     = "langgenius/dify-api:1.16.1"
+  default     = "langgenius/dify-api:1.17.0"
 }
 
 variable "dify-sandbox-image" {
@@ -65,25 +65,25 @@ variable "dify-sandbox-image" {
 variable "dify-web-image" {
   description = "Dify web frontend container image"
   type        = string
-  default     = "langgenius/dify-web:1.16.1"
+  default     = "langgenius/dify-web:1.17.0"
 }
 
 variable "dify-plugin-daemon-image" {
   description = "Dify plugin daemon container image"
   type        = string
-  default     = "langgenius/dify-plugin-daemon:0.6.3-local"
+  default     = "langgenius/dify-plugin-daemon:0.6.10-local"
 }
 
 variable "dify-agent-backend-image" {
   description = "Dify Agent v2 backend container image"
   type        = string
-  default     = "langgenius/dify-agent-backend:1.16.1"
+  default     = "langgenius/dify-agent-backend:1.17.0"
 }
 
 variable "dify-agent-local-sandbox-image" {
   description = "Dify Agent v2 local shell sandbox container image"
   type        = string
-  default     = "langgenius/dify-agent-local-sandbox:1.16.1"
+  default     = "langgenius/dify-agent-local-sandbox:1.17.0"
 }
 
 variable "enable-dify-agent-v2" {

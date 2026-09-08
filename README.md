@@ -1,6 +1,6 @@
 # Dify on Azure with Terraform
 
-Deploy Dify 1.16.1 on Azure Container Apps with PostgreSQL Flexible Server, Azure Cache for Redis, and Azure Storage. Classic Agent and Agent v2 are installed together; Agent v2 is enabled by default.
+Deploy Dify 1.17.0 on Azure Container Apps with PostgreSQL Flexible Server, Azure Cache for Redis, and Azure Storage. Classic Agent and Agent v2 are installed together; Agent v2 is enabled by default.
 
 This README is focused on one thing: making environment configuration repeatable and easy.
 
@@ -70,18 +70,21 @@ enable-dify-agent-v2 = false
 
 ### 4. Plan for an environment
 
-#### 4a.
+Initialize Terraform:
+
 ```bash
 terraform init
 ```
-#### 4b.
+
+Create a saved plan:
+
 ```bash
 terraform plan -var-file="environments/dev.tfvars" -out="dev.tfplan"
 ```
 
-Review:
+Review the plan before applying it.
 
-### 6. Apply
+### 5. Apply
 
 ```bash
 terraform apply "dev.tfplan"
@@ -177,13 +180,13 @@ From the current Terraform code, these are the most important things to set per 
 
 ## Dify Agent v2 security boundary
 
-Dify 1.16.1 warns that Agent v2 should only be made available to trusted users. This deployment adds the release's dedicated Agent SSRF proxy, generated bearer/JWE/shell-control secrets, internal-only service ingress, and shell path isolation.
+Dify Agent v2 should only be made available to trusted users. This deployment adds the dedicated Agent SSRF proxy, generated bearer/JWE/shell-control secrets, internal-only service ingress, shell path isolation, and persistent Agent home/workspace file shares.
 
 Azure Container Apps does not reproduce Docker Compose's per-service bridge-network isolation inside one managed environment. Proxy ACLs restrict supported HTTP(S) flows, but arbitrary malicious sandbox code could attempt direct sockets within the shared ACA environment. Do not present Agent v2 to untrusted users without an additional Azure network-security design.
 
-## Preserved and new timeouts
+## Timeout configuration
 
-The upgrade preserves the existing values exactly:
+The deployment retains the established operational timeouts:
 
 - `PYTHON_ENV_INIT_TIMEOUT=120`
 - `PLUGIN_MAX_EXECUTION_TIMEOUT=600`
@@ -191,24 +194,28 @@ The upgrade preserves the existing values exactly:
 - `FILES_ACCESS_TIMEOUT=300`
 - `PLUGIN_DAEMON_TIMEOUT=600.0`
 - `TEXT_GENERATION_TIMEOUT_MS=60000`
-- `WORKFLOW_MAX_EXECUTION_TIME=1200`
 - `ACCESS_TOKEN_EXPIRE_MINUTES=60`
 - `REFRESH_TOKEN_EXPIRE_DAYS=30`
 - `SQLALCHEMY_POOL_RECYCLE=3600`
 
-Dify 1.16.1 adds `AGENT_BACKEND_STREAM_READ_TIMEOUT_SECONDS=30`, `AGENT_BACKEND_RUN_TIMEOUT_SECONDS=1200`, and `WORKFLOW_GENERATION_TIMEOUT_MS=180000`; these are additive and do not replace the existing settings.
+Dify 1.17.0 raises the execution defaults to one hour. This deployment therefore uses `APP_MAX_EXECUTION_TIME=3600`, `WORKFLOW_MAX_EXECUTION_TIME=3600`, and `DIFY_AGENT_RUN_TIMEOUT_SECONDS=3600`. It also retains `AGENT_BACKEND_STREAM_READ_TIMEOUT_SECONDS=30`, `AGENT_BACKEND_STREAM_MAX_RECONNECTS=3`, and `WORKFLOW_GENERATION_TIMEOUT_MS=180000`, and adds the 1.17.0 binding-download and Home Snapshot timeouts.
 
 ## Fresh installation and upgrades
 
 - Fresh database: `MIGRATION_ENABLED=true` runs Dify migrations when the API starts.
 - Existing installation: back up PostgreSQL and storage before applying the new Container App revisions.
+- Dify 1.17.0 adds workflow versioning, workspace Skills, conversation cleanup, and Agent Home Snapshot migrations. They run through the normal database upgrade; the conversation cleanup index can take longer on a large database.
 - If an existing environment reached 1.15.0 without running `flask backfill-plugin-auto-upgrade`, run that command once after database migration. It is not required for an empty database.
+- If the deployment originated before 1.15.0 and the legacy model-type migration has not already been applied, run `flask data-migrate legacy-model-types` first in dry-run mode, review its output, and then rerun with `--apply`.
 
 ## References
 
 - Dify docs: https://docs.dify.ai
 - Dify GitHub: https://github.com/langgenius/dify
+- Dify 1.17.0 release: https://github.com/langgenius/dify/releases/tag/1.17.0
+- Dify 1.16.1 to 1.17.0 comparison: https://github.com/langgenius/dify/compare/1.16.1...1.17.0
 - Azure Container Apps docs: https://learn.microsoft.com/azure/container-apps
+- Azure Container Apps storage mounts: https://learn.microsoft.com/azure/container-apps/storage-mounts
 - Additional project notes: [PROJECT.md](./PROJECT.md)
 
 ## Post-deployment: access and configure Dify
@@ -221,7 +228,6 @@ From the project root:
 
 ```bash
 terraform output dify_app_url
-https://nginx--oxc668g.whiteriver-7c20261f.westeurope.azurecontainerapps.io/
 ```
 
 ### 3. Complete first-time Dify initialization
@@ -319,63 +325,3 @@ Success criteria:
 - Secrets used by containers: update in Key Vault and roll out a new revision when required.
 
 This split keeps infra reproducible while allowing fast iteration in Dify.
-
-# Notes Sändu (deprecated)
-
-## Checklist
-- [ ] Update variables in `var.tf`
-- [ ] Set passwords in `terraform.tfvars` (see: Generate secure keys)
-- [ ] Clean state if needed:
-```bash
-  rm -rf .terraform .terraform.lock.hcl terraform.tfstate terraform.tfstate.backup *.tfplan
-```
-
-## Commands
-
-```bash
-# Login
-az login
-az login --use-device-code --tenant <name>.onmicrosoft.com 
-az account set --subscription <subscriptionID>
-
-# Register provider (first time only)
-az provider register --namespace Microsoft.App
-
-# Deploy
-terraform init
-terraform plan
-terraform apply
-```
-
-## Production Variables
-
-### Existing resource group
-terraform import azurerm_resource_group.rg /subscriptions/<subscriptionId>/resourceGroups/<groupName>
-
-⚠️ **Must change for production:**
-
-| Variable | Description |
-| --- | --- |
-| `subscription-id` | Your Azure subscription ID |
-| `pgsql-password` | PostgreSQL password (no default, required) |
-| `dify-secret-key` | API encryption key |
-| `dify-plugin-daemon-key` | Plugin daemon auth key |
-| `dify-inner-api-key` | Internal API key |
-| `dify-sandbox-api-key` | Sandbox execution key |
-
-#### Generate secure keys
-Generate secure keys and write them to `terraform.tfvars`:
-```bash
-cat <<EOF > terraform.tfvars
-pgsql-password         = "$(openssl rand -base64 24 | tr -d '/+=' | head -c 32)"
-dify-secret-key        = "$(openssl rand -base64 42)"
-dify-plugin-daemon-key = "$(openssl rand -base64 42)"
-dify-inner-api-key     = "$(openssl rand -base64 42)"
-dify-sandbox-api-key   = "$(openssl rand -base64 42)"
-EOF
-```
-
-**Should also review:**
-- `group-name` - Resource group name
-- `region` - Azure region
-- `storage-account`, `redis`, `psql-flexible` - Must be globally unique
